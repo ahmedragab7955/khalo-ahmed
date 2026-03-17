@@ -78,7 +78,6 @@ jobs:
               package="com.khaloahmed.launcher">
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
               <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage"/>
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
               <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
               <uses-feature android:name="android.software.leanback" android:required="false"/>
               <application android:allowBackup="true" android:label="Khalo Ahmed"
@@ -105,65 +104,159 @@ jobs:
           import android.content.Intent;
           import android.net.Uri;
           import android.os.Bundle;
-          import android.os.Environment;
-          import android.webkit.*;
           import android.view.*;
+          import android.webkit.*;
           import org.json.*;
           import java.io.*;
           import java.util.*;
+
           public class MainActivity extends Activity {
               private WebView webView;
-              private static final Map<String,String[]> P=new LinkedHashMap<String,String[]>(){{
-                  put("PS1",new String[]{"/storage/0CF6-106E/ps1","com.epsxe.ePSXe",".bin,.iso,.img,.pbp,.cue"});
-                  put("PSP",new String[]{"/storage/0CF6-106E/psp","org.ppsspp.ppsspp",".iso,.cso,.pbp"});
-                  put("GBC",new String[]{"/storage/0CF6-106E/gbc","com.fastemulator.gbcfree",".gbc,.gb,.zip"});
+              private long lastInput = 0;
+              private static final long INPUT_DELAY = 180;
+
+              private static final Map<String,String[]> P = new LinkedHashMap<String,String[]>(){{
+                  put("PS1", new String[]{"/storage/0CF6-106E/ps1","com.epsxe.ePSXe",".bin,.iso,.img,.pbp,.cue"});
+                  put("PSP", new String[]{"/storage/0CF6-106E/psp","org.ppsspp.ppsspp",".iso,.cso,.pbp"});
+                  put("GBC", new String[]{"/storage/0CF6-106E/gbc","com.fastemulator.gbcfree",".gbc,.gb,.zip"});
               }};
-              private static final Set<String> I=new HashSet<>(Arrays.asList(".png",".jpg",".jpeg",".webp"));
-              @Override protected void onCreate(Bundle s){
+              private static final Set<String> IMG = new HashSet<>(Arrays.asList(".png",".jpg",".jpeg",".webp"));
+
+              // Track START+SELECT for exit
+              private boolean startPressed = false;
+              private boolean selectPressed = false;
+
+              @Override
+              protected void onCreate(Bundle s) {
                   super.onCreate(s);
-                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                  getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-                  webView=new WebView(this);setContentView(webView);
-                  WebSettings w=webView.getSettings();
-                  w.setJavaScriptEnabled(true);w.setAllowFileAccess(true);
-                  w.setAllowFileAccessFromFileURLs(true);w.setAllowUniversalAccessFromFileURLs(true);
-                  w.setDomStorageEnabled(true);
-                  webView.addJavascriptInterface(new B(),"Android");
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().getDecorView().setSystemUiVisibility(
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                  webView = new WebView(this);
+                  setContentView(webView);
+                  WebSettings ws = webView.getSettings();
+                  ws.setJavaScriptEnabled(true);
+                  ws.setAllowFileAccess(true);
+                  ws.setAllowFileAccessFromFileURLs(true);
+                  ws.setAllowUniversalAccessFromFileURLs(true);
+                  ws.setDomStorageEnabled(true);
+                  webView.addJavascriptInterface(new Bridge(), "Android");
                   webView.loadUrl("file:///android_asset/launcher/index.html");
               }
-              class B {
-                  @JavascriptInterface public String getGamesList(){
-                      JSONArray g=new JSONArray();
-                      try{for(Map.Entry<String,String[]> e:P.entrySet()){
-                          String pl=e.getKey(),pa=e.getValue()[0],ex=e.getValue()[2];
-                          Set<String> exs=new HashSet<>(Arrays.asList(ex.split(",")));
-                          File d=new File(pa);if(!d.exists())continue;
-                          File[] fs=d.listFiles();if(fs==null)continue;
-                          Map<String,String> arts=new HashMap<>();
-                          for(File f:fs){String n=f.getName().toLowerCase();for(String ie:I){if(n.endsWith(ie)){arts.put(n.substring(0,n.lastIndexOf('.')),f.getAbsolutePath());}}}
-                          for(File f:fs){if(!f.isFile())continue;String nm=f.getName(),nl=nm.toLowerCase();
-                              boolean r=false;for(String x:exs){if(nl.endsWith(x.trim())){r=true;break;}}if(!r)continue;
-                              String b=nm.contains(".")?nm.substring(0,nm.lastIndexOf('.')):nm;
-                              JSONObject o=new JSONObject();o.put("name",b.replaceAll("[_\\-]"," ").trim());
-                              o.put("platform",pl);o.put("file",nm);o.put("path",f.getAbsolutePath());
-                              o.put("art",arts.containsKey(b.toLowerCase())?arts.get(b.toLowerCase()):"");g.put(o);}
-                      }}catch(Exception e){e.printStackTrace();}
-                      return g.toString();
+
+              // ===== GAMEPAD: Analog stick & triggers =====
+              @Override
+              public boolean onGenericMotionEvent(MotionEvent event) {
+                  if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
+                      && event.getAction() == MotionEvent.ACTION_MOVE) {
+                      long now = System.currentTimeMillis();
+                      if (now - lastInput < INPUT_DELAY) return true;
+                      float x = event.getAxisValue(MotionEvent.AXIS_X);
+                      float y = event.getAxisValue(MotionEvent.AXIS_Y);
+                      // Also check HAT (D-pad on some controllers)
+                      float hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X);
+                      float hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                      if (x < -0.5 || hatX < -0.5) { lastInput = now; sendKey("ArrowLeft"); }
+                      else if (x > 0.5 || hatX > 0.5) { lastInput = now; sendKey("ArrowRight"); }
+                      else if (y < -0.5 || hatY < -0.5) { lastInput = now; sendKey("ArrowUp"); }
+                      else if (y > 0.5 || hatY > 0.5) { lastInput = now; sendKey("ArrowDown"); }
+                      return true;
                   }
-                  @JavascriptInterface public void launchGame(String pkg,String rom){
-                      try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);if(i==null)return;
-                          i.setData(Uri.fromFile(new File(rom)));i.putExtra("romPath",rom);
-                          i.putExtra("com.epsxe.ePSXe.ROM",rom);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);
-                      }catch(Exception e){e.printStackTrace();}
+                  return super.onGenericMotionEvent(event);
+              }
+
+              // ===== GAMEPAD: Buttons =====
+              @Override
+              public boolean onKeyDown(int keyCode, KeyEvent event) {
+                  // START + SELECT = exit app
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = true;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
+                  if (startPressed && selectPressed) { finish(); return true; }
+
+                  switch (keyCode) {
+                      case KeyEvent.KEYCODE_DPAD_UP:    sendKey("ArrowUp");    return true;
+                      case KeyEvent.KEYCODE_DPAD_DOWN:  sendKey("ArrowDown");  return true;
+                      case KeyEvent.KEYCODE_DPAD_LEFT:  sendKey("ArrowLeft");  return true;
+                      case KeyEvent.KEYCODE_DPAD_RIGHT: sendKey("ArrowRight"); return true;
+                      case KeyEvent.KEYCODE_BUTTON_A:
+                      case KeyEvent.KEYCODE_ENTER:
+                      case KeyEvent.KEYCODE_DPAD_CENTER: sendKey("Enter"); return true;
+                      case KeyEvent.KEYCODE_BUTTON_B:
+                      case KeyEvent.KEYCODE_BACK: sendKey("Escape"); return true;
                   }
-                  @JavascriptInterface public void requestPermission(){
-                      if(android.os.Build.VERSION.SDK_INT>=30){
-                          Intent i=new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);
+                  return super.onKeyDown(keyCode, event);
+              }
+
+              @Override
+              public boolean onKeyUp(int keyCode, KeyEvent event) {
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
+                  return super.onKeyUp(keyCode, event);
+              }
+
+              private void sendKey(final String key) {
+                  runOnUiThread(new Runnable() {
+                      @Override public void run() {
+                          webView.evaluateJavascript("handleKey({key:'" + key + "',preventDefault:function(){}})", null);
                       }
+                  });
+              }
+
+              class Bridge {
+                  @JavascriptInterface
+                  public String getGamesList() {
+                      JSONArray games = new JSONArray();
+                      try {
+                          for (Map.Entry<String,String[]> e : P.entrySet()) {
+                              String pl = e.getKey(), pa = e.getValue()[0], exStr = e.getValue()[2];
+                              Set<String> exts = new HashSet<>(Arrays.asList(exStr.split(",")));
+                              File dir = new File(pa);
+                              if (!dir.exists()) continue;
+                              File[] files = dir.listFiles();
+                              if (files == null) continue;
+                              Map<String,String> arts = new HashMap<>();
+                              for (File f : files) {
+                                  String n = f.getName().toLowerCase();
+                                  for (String ie : IMG) { if (n.endsWith(ie)) arts.put(n.substring(0,n.lastIndexOf('.')), f.getAbsolutePath()); }
+                              }
+                              for (File f : files) {
+                                  if (!f.isFile()) continue;
+                                  String nm = f.getName(), nl = nm.toLowerCase();
+                                  boolean rom = false;
+                                  for (String x : exts) { if (nl.endsWith(x.trim())) { rom = true; break; } }
+                                  if (!rom) continue;
+                                  String base = nm.contains(".") ? nm.substring(0, nm.lastIndexOf('.')) : nm;
+                                  JSONObject o = new JSONObject();
+                                  o.put("name", base.replaceAll("[_\\-]"," ").trim());
+                                  o.put("platform", pl); o.put("file", nm);
+                                  o.put("path", f.getAbsolutePath());
+                                  o.put("art", arts.containsKey(base.toLowerCase()) ? arts.get(base.toLowerCase()) : "");
+                                  games.put(o);
+                              }
+                          }
+                      } catch (Exception e) { e.printStackTrace(); }
+                      return games.toString();
+                  }
+
+                  @JavascriptInterface
+                  public void launchGame(String pkg, String rom) {
+                      try {
+                          Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
+                          if (i == null) return;
+                          i.setData(Uri.fromFile(new File(rom)));
+                          i.putExtra("romPath", rom);
+                          i.putExtra("com.epsxe.ePSXe.ROM", rom);
+                          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                          startActivity(i);
+                      } catch (Exception e) { e.printStackTrace(); }
                   }
               }
-              @Override public void onBackPressed(){webView.evaluateJavascript("if(document.getElementById('nowPlaying').classList.contains('show')){closeNowPlaying();}",null);}
+
+              @Override
+              public void onBackPressed() {
+                  webView.evaluateJavascript(
+                      "if(document.getElementById('nowPlaying').classList.contains('show')){closeNowPlaying();}", null);
+              }
           }
           EOF
 
@@ -188,7 +281,7 @@ jobs:
           .section-title{padding:10px 40px 16px;font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:3px;color:var(--dim);}
           .stats{padding:0 40px 12px;font-size:.7rem;color:var(--dim);font-family:'Orbitron',monospace;}
           .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;padding:0 40px 100px;}
-          .game-card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .2s;aspect-ratio:3/4;display:flex;flex-direction:column;outline:none;}
+          .game-card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .2s;aspect-ratio:3/4;display:flex;flex-direction:column;}
           .game-card.focused{border-color:var(--gold);transform:scale(1.06);box-shadow:0 8px 40px rgba(240,192,64,.3);}
           .game-art{flex:1;position:relative;overflow:hidden;background:#12121a;}
           .game-art img{width:100%;height:100%;object-fit:cover;}
@@ -210,91 +303,119 @@ jobs:
           .np-hint{font-size:.8rem;color:var(--dim);margin-top:10px;}
           .hint-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 40px;background:linear-gradient(0deg,var(--bg),transparent);display:flex;gap:24px;font-size:.7rem;color:var(--dim);font-family:'Orbitron',monospace;}
           .hint-key{background:var(--card);border:1px solid rgba(255,255,255,.1);padding:2px 8px;border-radius:4px;margin-left:6px;}
-          .perm-banner{background:#ff4444;color:white;padding:12px 40px;font-size:.85rem;cursor:pointer;text-align:center;}
           </style></head><body>
-          <div class="perm-banner" id="permBanner" style="display:none" onclick="requestPerm()">⚠️ اضغط هنا للسماح بالوصول للملفات</div>
           <header><div class="logo">KHALO AHMED</div><div class="clock" id="clock">00:00</div></header>
           <div class="tabs"><button class="tab active" data-platform="ALL">ALL</button><button class="tab" data-platform="PS1">PS1</button><button class="tab" data-platform="PSP">PSP</button><button class="tab" data-platform="GBC">GBC</button></div>
           <div class="search-wrap"><input class="search-bar" id="searchBar" type="text" placeholder="🔍 ابحث عن لعبة..."></div>
-          <div class="stats" id="stats"></div><div class="section-title" id="sectionTitle">ALL GAMES</div>
+          <div class="stats" id="stats"></div>
+          <div class="section-title" id="sectionTitle">ALL GAMES</div>
           <div class="games-grid" id="gamesGrid"></div>
-          <div class="now-playing" id="nowPlaying"><div class="np-art"><img id="npArt" src="" alt=""></div><div class="np-title" id="npTitle"></div><div class="np-platform" id="npPlatform"></div><div class="np-hint">اضغط A للتشغيل • B للرجوع</div></div>
-          <div class="hint-bar"><span><span class="hint-key">D-PAD</span> تنقل</span><span><span class="hint-key">A</span> تشغيل</span><span><span class="hint-key">B</span> رجوع</span></div>
+          <div class="now-playing" id="nowPlaying">
+            <div class="np-art"><img id="npArt" src="" alt=""></div>
+            <div class="np-title" id="npTitle"></div>
+            <div class="np-platform" id="npPlatform"></div>
+            <div class="np-hint">A = تشغيل &nbsp;•&nbsp; B = رجوع &nbsp;•&nbsp; START+SELECT = خروج</div>
+          </div>
+          <div class="hint-bar">
+            <span><span class="hint-key">D-PAD</span> تنقل</span>
+            <span><span class="hint-key">A</span> تشغيل</span>
+            <span><span class="hint-key">B</span> رجوع</span>
+            <span><span class="hint-key">START+SELECT</span> خروج</span>
+          </div>
           <script>
-          const PL={PS1:{path:'/storage/0CF6-106E/ps1',emu:'com.epsxe.ePSXe',icon:'🎮'},PSP:{path:'/storage/0CF6-106E/psp',emu:'org.ppsspp.ppsspp',icon:'🕹️'},GBC:{path:'/storage/0CF6-106E/gbc',emu:'com.fastemulator.gbcfree',icon:'👾'}};
-          const DEMO=[{name:'الألعاب مش ظاهرة',platform:'PS1',file:'',art:''},{name:'اضغط البانر الأحمر',platform:'PS1',file:'',art:''}];
-          let all=[],filtered=[],cur='ALL',fi=0,fz='grid',npG=null,gpInterval=null,lastGpTime=0;
+          const PL={
+            PS1:{path:'/storage/0CF6-106E/ps1',emu:'com.epsxe.ePSXe',icon:'🎮'},
+            PSP:{path:'/storage/0CF6-106E/psp',emu:'org.ppsspp.ppsspp',icon:'🕹️'},
+            GBC:{path:'/storage/0CF6-106E/gbc',emu:'com.fastemulator.gbcfree',icon:'👾'}
+          };
+          const DEMO=[
+            {name:'Final Fantasy VII',platform:'PS1',file:'ff7.bin',art:''},
+            {name:'Crash Bandicoot',platform:'PS1',file:'crash.bin',art:''},
+            {name:'God of War',platform:'PSP',file:'gow.iso',art:''},
+            {name:'Pokemon Red',platform:'GBC',file:'pokered.gbc',art:''}
+          ];
+          let all=[],filtered=[],cur='ALL',fi=0,fz='grid',npG=null;
 
-          function requestPerm(){if(window.Android&&window.Android.requestPermission){window.Android.requestPermission();setTimeout(()=>loadGames(),3000);}}
-
-          function init(){loadGames();updateClock();setInterval(updateClock,1000);setupKeys();setupGamepad();}
-
-          function loadGames(){
-            try{
-              if(window.Android&&window.Android.getGamesList){
-                const list=JSON.parse(window.Android.getGamesList());
-                if(list.length>0){all=list;document.getElementById('permBanner').style.display='none';}
-                else{all=DEMO;document.getElementById('permBanner').style.display='block';}
-              }else{all=DEMO;}
-            }catch(e){all=DEMO;}
-            filterRender();
+          function init(){
+            try{all=window.Android?JSON.parse(window.Android.getGamesList()):DEMO;}catch(e){all=DEMO;}
+            if(!all.length)all=DEMO;
+            filterRender();updateClock();setInterval(updateClock,1000);
           }
 
           function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
-          function filterRender(){const s=document.getElementById('searchBar').value.toLowerCase();filtered=all.filter(g=>(cur==='ALL'||g.platform===cur)&&(!s||g.name.toLowerCase().includes(s)));document.getElementById('sectionTitle').textContent=(cur==='ALL'?'ALL':cur)+' GAMES';document.getElementById('stats').textContent=filtered.length+' GAMES';renderGrid();}
-          function renderGrid(){const g=document.getElementById('gamesGrid');if(!filtered.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--dim);font-family:Orbitron,monospace">NO GAMES</div>';return;}
-          g.innerHTML=filtered.map((gm,i)=>{const p=PL[gm.platform]||{icon:'🎮'};const a=gm.art?'file://'+gm.art:'';
-          return`<div class="game-card ${i===fi&&fz==='grid'?'focused':''}" onclick="selectGame(${i})"><div class="game-art">${a?`<img src="${a}" onerror="this.parentElement.innerHTML='<div class=no-art>${p.icon}<span>NO ART</span></div>'">`:`<div class="no-art">${p.icon}<span>NO ART</span></div>`}<div class="platform-badge badge-${gm.platform}">${gm.platform}</div></div><div class="card-info"><div class="card-title">${gm.name}</div><div class="card-platform">${gm.platform}</div></div></div>`;}).join('');}
 
-          function selectGame(i){npG=filtered[i];if(!npG||!npG.file)return;document.getElementById('npTitle').textContent=npG.name;document.getElementById('npPlatform').textContent=npG.platform+' • '+npG.file;document.getElementById('npArt').src=npG.art?'file://'+npG.art:'';document.getElementById('nowPlaying').classList.add('show');}
-          function closeNowPlaying(){document.getElementById('nowPlaying').classList.remove('show');npG=null;}
-          function launchGame(){if(!npG||!npG.file)return;const p=PL[npG.platform];if(window.Android)window.Android.launchGame(p.emu,p.path+'/'+npG.file);}
-
-          function setupKeys(){
-            document.addEventListener('keydown',handleKey);
-            document.getElementById('searchBar').addEventListener('input',()=>{fi=0;filterRender();});
-            document.getElementById('searchBar').addEventListener('focus',()=>{fz='search';renderGrid();});
+          function filterRender(){
+            const s=document.getElementById('searchBar').value.toLowerCase();
+            filtered=all.filter(g=>(cur==='ALL'||g.platform===cur)&&(!s||g.name.toLowerCase().includes(s)));
+            document.getElementById('sectionTitle').textContent=(cur==='ALL'?'ALL':cur)+' GAMES';
+            document.getElementById('stats').textContent=filtered.length+' GAMES';
+            renderGrid();
           }
 
-          function setupGamepad(){
-            window.addEventListener('gamepadconnected',function(e){
-              if(gpInterval)clearInterval(gpInterval);
-              gpInterval=setInterval(function(){
-                const gp=navigator.getGamepads()[e.gamepad.index];
-                if(!gp)return;
-                const now=Date.now();
-                if(now-lastGpTime<180)return;
-                // D-Pad buttons (buttons 12-15)
-                if(gp.buttons[12]&&gp.buttons[12].pressed){lastGpTime=now;handleKey({key:'ArrowUp',preventDefault:()=>{}});}
-                else if(gp.buttons[13]&&gp.buttons[13].pressed){lastGpTime=now;handleKey({key:'ArrowDown',preventDefault:()=>{}});}
-                else if(gp.buttons[14]&&gp.buttons[14].pressed){lastGpTime=now;handleKey({key:'ArrowLeft',preventDefault:()=>{}});}
-                else if(gp.buttons[15]&&gp.buttons[15].pressed){lastGpTime=now;handleKey({key:'ArrowRight',preventDefault:()=>{}});}
-                // Analog stick
-                else if(gp.axes[0]<-0.5){lastGpTime=now;handleKey({key:'ArrowRight',preventDefault:()=>{}});}
-                else if(gp.axes[0]>0.5){lastGpTime=now;handleKey({key:'ArrowLeft',preventDefault:()=>{}});}
-                else if(gp.axes[1]<-0.5){lastGpTime=now;handleKey({key:'ArrowUp',preventDefault:()=>{}});}
-                else if(gp.axes[1]>0.5){lastGpTime=now;handleKey({key:'ArrowDown',preventDefault:()=>{}});}
-                // A button=0, B button=1
-                if(gp.buttons[0]&&gp.buttons[0].pressed){lastGpTime=now;handleKey({key:'Enter',preventDefault:()=>{}});}
-                else if(gp.buttons[1]&&gp.buttons[1].pressed){lastGpTime=now;handleKey({key:'Escape',preventDefault:()=>{}});}
-              },50);
-            });
+          function renderGrid(){
+            const g=document.getElementById('gamesGrid');
+            if(!filtered.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--dim);font-family:Orbitron,monospace">NO GAMES</div>';return;}
+            g.innerHTML=filtered.map((gm,i)=>{
+              const p=PL[gm.platform]||{icon:'🎮'};
+              const a=gm.art?'file://'+gm.art:'';
+              return`<div class="game-card ${i===fi&&fz==='grid'?'focused':''}" onclick="selectGame(${i})">
+                <div class="game-art">
+                  ${a?`<img src="${a}" onerror="this.parentElement.innerHTML='<div class=no-art>${p.icon}<span>NO ART</span></div>'">`:`<div class="no-art">${p.icon}<span>NO ART</span></div>`}
+                  <div class="platform-badge badge-${gm.platform}">${gm.platform}</div>
+                </div>
+                <div class="card-info"><div class="card-title">${gm.name}</div><div class="card-platform">${gm.platform}</div></div>
+              </div>`;
+            }).join('');
+          }
+
+          function selectGame(i){
+            npG=filtered[i];if(!npG)return;
+            document.getElementById('npTitle').textContent=npG.name;
+            document.getElementById('npPlatform').textContent=npG.platform+' • '+npG.file;
+            document.getElementById('npArt').src=npG.art?'file://'+npG.art:'';
+            document.getElementById('nowPlaying').classList.add('show');
+          }
+
+          function closeNowPlaying(){document.getElementById('nowPlaying').classList.remove('show');npG=null;}
+
+          function launchGame(){
+            if(!npG||!npG.file)return;
+            const p=PL[npG.platform];
+            if(window.Android)window.Android.launchGame(p.emu,p.path+'/'+npG.file);
           }
 
           function getGridCols(){return window.getComputedStyle(document.getElementById('gamesGrid')).gridTemplateColumns.split(' ').length||5;}
+
           function handleKey(e){
             const np=document.getElementById('nowPlaying').classList.contains('show');
-            if(np){if(e.key==='Enter'||e.key===' ')launchGame();else if(e.key==='Escape'||e.keyCode===4)closeNowPlaying();return;}
+            if(np){
+              if(e.key==='Enter')launchGame();
+              else if(e.key==='Escape')closeNowPlaying();
+              return;
+            }
             const c=getGridCols();
-            if(e.key==='ArrowRight'){if(fz==='tabs')moveFocusTab(-1);else{fi=Math.max(0,fi-1);renderGrid();}e.preventDefault();}
-            else if(e.key==='ArrowLeft'){if(fz==='tabs')moveFocusTab(1);else{fi=Math.min(filtered.length-1,fi+1);renderGrid();}e.preventDefault();}
-            else if(e.key==='ArrowDown'){if(fz==='tabs'||fz==='search'){fz='grid';document.getElementById('searchBar').blur();renderGrid();}else{fi=Math.min(filtered.length-1,fi+c);renderGrid();}e.preventDefault();}
+            if(e.key==='ArrowLeft'){if(fz==='tabs')moveFocusTab(-1);else{fi=Math.max(0,fi-1);renderGrid();}e.preventDefault();}
+            else if(e.key==='ArrowRight'){if(fz==='tabs')moveFocusTab(1);else{fi=Math.min(filtered.length-1,fi+1);renderGrid();}e.preventDefault();}
             else if(e.key==='ArrowUp'){if(fz==='grid'&&fi<c){fz='search';document.getElementById('searchBar').focus();}else if(fz==='grid'){fi=Math.max(0,fi-c);renderGrid();}e.preventDefault();}
-            else if(e.key==='Enter'||e.key===' '){if(fz==='grid')selectGame(fi);e.preventDefault();}
-            const card=document.querySelector('.game-card.focused');if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});
+            else if(e.key==='ArrowDown'){if(fz==='tabs'||fz==='search'){fz='grid';document.getElementById('searchBar').blur();renderGrid();}else{fi=Math.min(filtered.length-1,fi+c);renderGrid();}e.preventDefault();}
+            else if(e.key==='Enter'){if(fz==='grid')selectGame(fi);e.preventDefault();}
+            else if(e.key==='Escape'){closeNowPlaying();e.preventDefault();}
+            const card=document.querySelector('.game-card.focused');
+            if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});
           }
-          function moveFocusTab(d){const tabs=document.querySelectorAll('.tab');const ai=Array.from(tabs).findIndex(t=>t.classList.contains('active'));tabs[Math.max(0,Math.min(tabs.length-1,ai+d))].click();}
-          document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{cur=t.dataset.platform;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');fi=0;fz='grid';filterRender();}));
+
+          function moveFocusTab(d){
+            const tabs=document.querySelectorAll('.tab');
+            const ai=Array.from(tabs).findIndex(t=>t.classList.contains('active'));
+            tabs[Math.max(0,Math.min(tabs.length-1,ai+d))].click();
+          }
+
+          document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+            cur=t.dataset.platform;
+            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+            t.classList.add('active');fi=0;fz='grid';filterRender();
+          }));
+
           init();
           </script></body></html>
           HTMLEOF
