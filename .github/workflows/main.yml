@@ -20,16 +20,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create full Native project
+      - name: Create project skeleton
         run: |
           mkdir -p app/src/main/java/com/khaloahmed/launcher
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/anim
-          mkdir -p app/src/main/res/xml
 
-          cat > settings.gradle << 'EOF'
+          cat > settings.gradle << 'GRADLE_EOF'
           pluginManagement {
               repositories { google(); mavenCentral(); gradlePluginPortal() }
           }
@@ -39,67 +38,50 @@ jobs:
           }
           rootProject.name = "KhaloAhmed"
           include ':app'
-          EOF
+          GRADLE_EOF
 
-          cat > gradle.properties << 'EOF'
+          cat > gradle.properties << 'GPROPS_EOF'
           android.useAndroidX=true
           android.enableJetifier=true
-          org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
-          EOF
+          GPROPS_EOF
 
-          cat > build.gradle << 'EOF'
+          cat > build.gradle << 'BGRD_EOF'
           plugins {
               id 'com.android.application' version '8.2.2' apply false
           }
-          EOF
+          BGRD_EOF
 
-          cat > app/build.gradle << 'EOF'
+          cat > app/build.gradle << 'APPGRD_EOF'
           plugins { id 'com.android.application' }
-
           android {
               namespace 'com.khaloahmed.launcher'
               compileSdk 34
-
               defaultConfig {
                   applicationId "com.khaloahmed.launcher"
                   minSdk 21
                   targetSdk 34
-                  versionCode 2
-                  versionName "1.1"
-
-                  vectorDrawables.useSupportLibrary = true
+                  versionCode 3
+                  versionName "3.0"
               }
-
               buildTypes {
                   release {
                       minifyEnabled false
-                      shrinkResources false
                       signingConfig signingConfigs.debug
                   }
-                  debug {
-                      minifyEnabled false
-                  }
               }
-
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_1_8
                   targetCompatibility JavaVersion.VERSION_1_8
               }
-
-              packaging {
-                  resources {
-                      excludes += '/META-INF/{AL2.0,LGPL2.1}'
-                  }
-              }
           }
-
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'androidx.core:core:1.12.0'
           }
-          EOF
+          APPGRD_EOF
 
-          cat > app/src/main/AndroidManifest.xml << 'EOF'
+      - name: Create Manifest
+        run: |
+          cat > app/src/main/AndroidManifest.xml << 'MANIFEST_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
@@ -114,12 +96,6 @@ jobs:
                   <package android:name="com.epsxe.ePSXe"/>
                   <package android:name="org.ppsspp.ppsspp"/>
                   <package android:name="com.fastemulator.gbcfree"/>
-
-                  <intent>
-                      <action android:name="android.intent.action.MAIN"/>
-                      <category android:name="android.intent.category.LAUNCHER"/>
-                  </intent>
-
                   <intent>
                       <action android:name="android.intent.action.VIEW"/>
                       <data android:mimeType="*/*"/>
@@ -130,19 +106,7 @@ jobs:
                   android:allowBackup="true"
                   android:label="Khalo Ahmed"
                   android:requestLegacyExternalStorage="true"
-                  android:theme="@style/AppTheme"
-                  android:hardwareAccelerated="true"
-                  android:largeHeap="false">
-
-                  <provider
-                      android:name="androidx.core.content.FileProvider"
-                      android:authorities="com.khaloahmed.launcher.fileprovider"
-                      android:exported="false"
-                      android:grantUriPermissions="true">
-                      <meta-data
-                          android:name="android.support.FILE_PROVIDER_PATHS"
-                          android:resource="@xml/file_paths" />
-                  </provider>
+                  android:theme="@style/AppTheme">
 
                   <activity
                       android:name=".PlatformActivity"
@@ -162,260 +126,127 @@ jobs:
                       android:screenOrientation="landscape"/>
               </application>
           </manifest>
-          EOF
+          MANIFEST_EOF
 
-          cat > app/src/main/res/xml/file_paths.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <paths xmlns:android="http://schemas.android.com/apk/res/android">
-              <root-path name="root" path="." />
-              <external-path name="external" path="." />
-              <files-path name="files" path="." />
-              <cache-path name="cache" path="." />
-          </paths>
-          EOF
-
-          cat > app/src/main/res/values/colors.xml << 'EOF'
+      - name: Create Resources
+        run: |
+          cat > app/src/main/res/values/colors.xml << 'COLORS_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <color name="bg_dark">#070913</color>
-              <color name="bg_dark_2">#0B1020</color>
-              <color name="bg_card">#121A2E</color>
-              <color name="bg_left">#0A0F1E</color>
-              <color name="accent">#7C5CFF</color>
-              <color name="accent2">#4FA3FF</color>
-              <color name="gold">#F5C451</color>
-              <color name="text_white">#FFFFFF</color>
-              <color name="text_soft">#D7DDF0</color>
-              <color name="text_dim">#6E7A99</color>
-              <color name="selected_bg">#1A2440</color>
-              <color name="line">#1F2944</color>
-              <color name="transparent">#00000000</color>
-              <color name="overlay_dark">#99000000</color>
+              <color name="bg">#0a0a18</color>
+              <color name="bg_panel">#0d0d1e</color>
+              <color name="bg_card">#111126</color>
+              <color name="divider">#0f0f22</color>
+              <color name="text_bright">#ffffff</color>
+              <color name="text_mid">#8899bb</color>
+              <color name="text_dim">#3a4060</color>
           </resources>
-          EOF
+          COLORS_EOF
 
-          cat > app/src/main/res/values/styles.xml << 'EOF'
+          cat > app/src/main/res/values/strings.xml << 'STR_EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Khalo Ahmed</string>
+          </resources>
+          STR_EOF
+
+          cat > app/src/main/res/values/styles.xml << 'STYLES_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
               <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
-                  <item name="android:windowBackground">@drawable/bg_main</item>
-                  <item name="android:windowAnimationStyle">@style/WindowAnim</item>
+                  <item name="android:windowBackground">@color/bg</item>
+                  <item name="android:windowAnimationStyle">@style/WinAnim</item>
               </style>
-
-              <style name="WindowAnim" parent="android:Animation.Activity">
+              <style name="WinAnim" parent="android:Animation.Activity">
                   <item name="android:activityOpenEnterAnimation">@anim/slide_in_right</item>
                   <item name="android:activityOpenExitAnimation">@anim/slide_out_left</item>
                   <item name="android:activityCloseEnterAnimation">@anim/slide_in_left</item>
                   <item name="android:activityCloseExitAnimation">@anim/slide_out_right</item>
               </style>
           </resources>
-          EOF
+          STYLES_EOF
 
-          cat > app/src/main/res/values/strings.xml << 'EOF'
+          cat > app/src/main/res/anim/slide_in_right.xml << 'A1_EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <string name="app_name">Khalo Ahmed</string>
-          </resources>
-          EOF
+          <translate xmlns:android="http://schemas.android.com/apk/res/android"
+              android:fromXDelta="100%" android:toXDelta="0%"
+              android:duration="260" android:interpolator="@android:anim/decelerate_interpolator"/>
+          A1_EOF
 
-          cat > app/src/main/res/drawable/bg_main.xml << 'EOF'
+          cat > app/src/main/res/anim/slide_out_left.xml << 'A2_EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <gradient
-                  android:angle="315"
-                  android:startColor="#070913"
-                  android:centerColor="#0B1020"
-                  android:endColor="#11172A"/>
-          </shape>
-          EOF
+          <translate xmlns:android="http://schemas.android.com/apk/res/android"
+              android:fromXDelta="0%" android:toXDelta="-100%"
+              android:duration="260" android:interpolator="@android:anim/decelerate_interpolator"/>
+          A2_EOF
 
-          cat > app/src/main/res/drawable/card_platform.xml << 'EOF'
+          cat > app/src/main/res/anim/slide_in_left.xml << 'A3_EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <corners android:radius="28dp"/>
-              <gradient
-                  android:angle="315"
-                  android:startColor="#121A2E"
-                  android:endColor="#0E1526"/>
-              <stroke
-                  android:width="1dp"
-                  android:color="#273452"/>
-          </shape>
-          EOF
+          <translate xmlns:android="http://schemas.android.com/apk/res/android"
+              android:fromXDelta="-100%" android:toXDelta="0%"
+              android:duration="260" android:interpolator="@android:anim/decelerate_interpolator"/>
+          A3_EOF
 
-          cat > app/src/main/res/drawable/card_platform_selected.xml << 'EOF'
+          cat > app/src/main/res/anim/slide_out_right.xml << 'A4_EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <corners android:radius="28dp"/>
-              <gradient
-                  android:angle="315"
-                  android:startColor="#1A2440"
-                  android:endColor="#121A2E"/>
-              <stroke
-                  android:width="3dp"
-                  android:color="#7C5CFF"/>
-          </shape>
-          EOF
+          <translate xmlns:android="http://schemas.android.com/apk/res/android"
+              android:fromXDelta="0%" android:toXDelta="100%"
+              android:duration="260" android:interpolator="@android:anim/decelerate_interpolator"/>
+          A4_EOF
 
-          cat > app/src/main/res/drawable/panel_header.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <corners android:topLeftRadius="0dp" android:topRightRadius="0dp"
-                  android:bottomLeftRadius="18dp" android:bottomRightRadius="18dp"/>
-              <gradient
-                  android:angle="315"
-                  android:startColor="#141D34"
-                  android:endColor="#10182B"/>
-          </shape>
-          EOF
-
-          cat > app/src/main/res/drawable/preview_overlay.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <gradient
-                  android:angle="90"
-                  android:startColor="#00000000"
-                  android:endColor="#CC000000"/>
-          </shape>
-          EOF
-
-          cat > app/src/main/res/drawable/item_selected.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <corners android:radius="14dp"/>
-              <gradient
-                  android:angle="0"
-                  android:startColor="#1A2440"
-                  android:endColor="#131C32"/>
-              <stroke
-                  android:width="2dp"
-                  android:color="#7C5CFF"/>
-          </shape>
-          EOF
-
-          cat > app/src/main/res/anim/slide_in_right.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <set xmlns:android="http://schemas.android.com/apk/res/android">
-              <translate
-                  android:fromXDelta="100%"
-                  android:toXDelta="0%"
-                  android:duration="240"
-                  android:interpolator="@android:anim/decelerate_interpolator"/>
-              <alpha
-                  android:fromAlpha="0.7"
-                  android:toAlpha="1.0"
-                  android:duration="240"/>
-          </set>
-          EOF
-
-          cat > app/src/main/res/anim/slide_out_left.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <set xmlns:android="http://schemas.android.com/apk/res/android">
-              <translate
-                  android:fromXDelta="0%"
-                  android:toXDelta="-10%"
-                  android:duration="240"
-                  android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
-              <alpha
-                  android:fromAlpha="1.0"
-                  android:toAlpha="0.9"
-                  android:duration="240"/>
-          </set>
-          EOF
-
-          cat > app/src/main/res/anim/slide_in_left.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <set xmlns:android="http://schemas.android.com/apk/res/android">
-              <translate
-                  android:fromXDelta="-20%"
-                  android:toXDelta="0%"
-                  android:duration="220"
-                  android:interpolator="@android:anim/decelerate_interpolator"/>
-              <alpha
-                  android:fromAlpha="0.85"
-                  android:toAlpha="1.0"
-                  android:duration="220"/>
-          </set>
-          EOF
-
-          cat > app/src/main/res/anim/slide_out_right.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <set xmlns:android="http://schemas.android.com/apk/res/android">
-              <translate
-                  android:fromXDelta="0%"
-                  android:toXDelta="100%"
-                  android:duration="220"
-                  android:interpolator="@android:anim/accelerate_interpolator"/>
-              <alpha
-                  android:fromAlpha="1.0"
-                  android:toAlpha="0.7"
-                  android:duration="220"/>
-          </set>
-          EOF
-
-          cat > app/src/main/res/anim/fade_in.xml << 'EOF'
+          cat > app/src/main/res/anim/fade_in.xml << 'A5_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <alpha xmlns:android="http://schemas.android.com/apk/res/android"
-              android:fromAlpha="0.0"
-              android:toAlpha="1.0"
-              android:duration="180"
-              android:interpolator="@android:anim/decelerate_interpolator"/>
-          EOF
+              android:fromAlpha="0.0" android:toAlpha="1.0"
+              android:duration="200"/>
+          A5_EOF
 
-          cat > app/src/main/res/anim/scale_pop.xml << 'EOF'
+          cat > app/src/main/res/anim/pop_in.xml << 'A6_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <set xmlns:android="http://schemas.android.com/apk/res/android">
-              <scale
-                  android:fromXScale="0.97"
-                  android:toXScale="1.0"
-                  android:fromYScale="0.97"
-                  android:toYScale="1.0"
-                  android:pivotX="50%"
-                  android:pivotY="50%"
-                  android:duration="160"
-                  android:interpolator="@android:anim/decelerate_interpolator"/>
-              <alpha
-                  android:fromAlpha="0.85"
-                  android:toAlpha="1.0"
-                  android:duration="160"/>
+              <scale android:fromXScale="0.82" android:toXScale="1.0"
+                  android:fromYScale="0.82" android:toYScale="1.0"
+                  android:pivotX="50%" android:pivotY="50%"
+                  android:duration="220"
+                  android:interpolator="@android:anim/overshoot_interpolator"/>
+              <alpha android:fromAlpha="0.0" android:toAlpha="1.0" android:duration="160"/>
           </set>
-          EOF
+          A6_EOF
 
-          cat > app/src/main/res/layout/activity_platform.xml << 'EOF'
+      - name: Create Layouts
+        run: |
+          cat > app/src/main/res/layout/activity_platform.xml << 'L1_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@drawable/bg_main"
-              android:paddingLeft="28dp"
-              android:paddingRight="28dp">
+              android:background="@color/bg">
 
               <LinearLayout
-                  android:id="@+id/topHeader"
+                  android:id="@+id/header"
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
+                  android:layout_alignParentTop="true"
                   android:orientation="vertical"
-                  android:layout_marginTop="28dp">
+                  android:gravity="center"
+                  android:paddingTop="28dp"
+                  android:paddingBottom="12dp">
 
                   <TextView
-                      android:id="@+id/title"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:text="KHALO AHMED"
-                      android:textColor="@color/text_white"
-                      android:textSize="30sp"
+                      android:textColor="#ffffff"
+                      android:textSize="28sp"
                       android:textStyle="bold"
-                      android:letterSpacing="0.16"
-                      android:fontFamily="sans-serif-medium"/>
+                      android:letterSpacing="0.22"
+                      android:fontFamily="sans-serif-condensed"/>
 
-                  <TextView
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_marginTop="6dp"
-                      android:text="Retro launcher"
-                      android:textColor="@color/text_dim"
-                      android:textSize="12sp"
-                      android:letterSpacing="0.12"/>
+                  <View
+                      android:layout_width="160dp"
+                      android:layout_height="2dp"
+                      android:layout_marginTop="8dp"
+                      android:background="#ff6633"/>
               </LinearLayout>
 
               <LinearLayout
@@ -424,334 +255,262 @@ jobs:
                   android:layout_height="wrap_content"
                   android:layout_centerInParent="true"
                   android:orientation="horizontal"
-                  android:gravity="center" />
+                  android:gravity="center"/>
 
               <TextView
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
                   android:layout_alignParentBottom="true"
                   android:layout_centerHorizontal="true"
-                  android:layout_marginBottom="18dp"
-                  android:text="◀ ▶ تنقل   •   OK دخول   •   B رجوع   •   START+SELECT خروج"
-                  android:textColor="@color/text_dim"
+                  android:layout_marginBottom="14dp"
+                  android:text="  DPAD  تنقل        A  دخول        START+SELECT  خروج  "
+                  android:textColor="#334060"
                   android:textSize="11sp"/>
           </RelativeLayout>
-          EOF
+          L1_EOF
 
-          cat > app/src/main/res/layout/activity_games.xml << 'EOF'
+          cat > app/src/main/res/layout/activity_games.xml << 'L2_EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@drawable/bg_main"
-              android:orientation="horizontal"
-              android:padding="16dp">
+              android:background="@color/bg"
+              android:orientation="horizontal">
 
               <LinearLayout
                   android:layout_width="0dp"
                   android:layout_height="match_parent"
-                  android:layout_weight="4.2"
-                  android:background="@color/bg_left"
-                  android:orientation="vertical"
-                  android:padding="0dp">
+                  android:layout_weight="38"
+                  android:background="@color/bg_panel"
+                  android:orientation="vertical">
 
                   <LinearLayout
+                      android:id="@+id/platformBadge"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:orientation="vertical"
-                      android:padding="22dp"
-                      android:background="@drawable/panel_header">
+                      android:paddingStart="18dp"
+                      android:paddingEnd="18dp"
+                      android:paddingTop="16dp"
+                      android:paddingBottom="14dp">
 
                       <TextView
                           android:id="@+id/platformName"
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:textColor="@color/accent2"
-                          android:textSize="12sp"
+                          android:textSize="14sp"
                           android:textStyle="bold"
-                          android:letterSpacing="0.18"/>
+                          android:letterSpacing="0.2"
+                          android:fontFamily="monospace"/>
 
                       <TextView
                           android:id="@+id/gameCount"
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:textColor="@color/text_dim"
+                          android:textColor="#445570"
                           android:textSize="11sp"
-                          android:layout_marginTop="6dp"/>
-
-                      <TextView
-                          android:id="@+id/statusText"
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:textColor="@color/gold"
-                          android:textSize="10sp"
-                          android:layout_marginTop="8dp"
-                          android:text="READY"/>
+                          android:fontFamily="monospace"
+                          android:layout_marginTop="2dp"/>
                   </LinearLayout>
+
+                  <View
+                      android:id="@+id/separator"
+                      android:layout_width="match_parent"
+                      android:layout_height="2dp"/>
 
                   <ListView
                       android:id="@+id/gameList"
                       android:layout_width="match_parent"
                       android:layout_height="0dp"
                       android:layout_weight="1"
-                      android:divider="@color/line"
+                      android:divider="@color/divider"
                       android:dividerHeight="1dp"
                       android:scrollbars="none"
-                      android:fastScrollEnabled="false"
-                      android:cacheColorHint="@android:color/transparent"
-                      android:listSelector="@android:color/transparent"
                       android:focusable="false"
-                      android:fadingEdge="none"/>
+                      android:overScrollMode="never"/>
               </LinearLayout>
 
               <FrameLayout
                   android:layout_width="0dp"
                   android:layout_height="match_parent"
-                  android:layout_weight="5.8"
-                  android:layout_marginLeft="14dp"
-                  android:background="#0A0F1E">
+                  android:layout_weight="62"
+                  android:background="#000000">
 
                   <ImageView
                       android:id="@+id/previewBg"
                       android:layout_width="match_parent"
                       android:layout_height="match_parent"
                       android:scaleType="centerCrop"
-                      android:alpha="0.18"/>
+                      android:alpha="0.15"/>
 
                   <ImageView
                       android:id="@+id/previewImg"
-                      android:layout_width="match_parent"
+                      android:layout_width="wrap_content"
                       android:layout_height="match_parent"
                       android:layout_gravity="center"
                       android:scaleType="fitCenter"
                       android:adjustViewBounds="true"
-                      android:padding="28dp"/>
+                      android:padding="26dp"/>
 
                   <TextView
                       android:id="@+id/noArtIcon"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:layout_gravity="center"
-                      android:textSize="82sp"
-                      android:textColor="#88FFFFFF"
+                      android:textSize="88sp"
                       android:visibility="gone"/>
 
-                  <View
-                      android:layout_width="match_parent"
-                      android:layout_height="match_parent"
-                      android:background="@drawable/preview_overlay"/>
-
-                  <LinearLayout
+                  <TextView
+                      android:id="@+id/previewTitle"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:layout_gravity="bottom"
-                      android:orientation="vertical"
-                      android:padding="22dp"
-                      android:background="#66000000">
-
-                      <TextView
-                          android:id="@+id/previewTitle"
-                          android:layout_width="match_parent"
-                          android:layout_height="wrap_content"
-                          android:textColor="@color/text_white"
-                          android:textSize="19sp"
-                          android:textStyle="bold"
-                          android:gravity="center"/>
-
-                      <TextView
-                          android:id="@+id/previewSub"
-                          android:layout_width="match_parent"
-                          android:layout_height="wrap_content"
-                          android:layout_marginTop="6dp"
-                          android:textColor="@color/text_dim"
-                          android:textSize="11sp"
-                          android:gravity="center"
-                          android:text="A / OK to launch"/>
-                  </LinearLayout>
+                      android:paddingStart="22dp"
+                      android:paddingEnd="22dp"
+                      android:paddingTop="30dp"
+                      android:paddingBottom="16dp"
+                      android:textColor="#ffffffee"
+                      android:textSize="17sp"
+                      android:textStyle="bold"
+                      android:gravity="center"
+                      android:background="#cc000000"
+                      android:fontFamily="sans-serif-condensed"
+                      android:letterSpacing="0.04"/>
               </FrameLayout>
           </LinearLayout>
-          EOF
+          L2_EOF
 
-          cat > app/src/main/res/layout/item_game.xml << 'EOF'
+          cat > app/src/main/res/layout/item_game.xml << 'L3_EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              android:orientation="horizontal"
-              android:gravity="center_vertical"
-              android:paddingLeft="14dp"
-              android:paddingTop="8dp"
-              android:paddingRight="14dp"
-              android:paddingBottom="8dp">
-
-              <TextView
-                  android:id="@+id/gameNum"
-                  android:layout_width="44dp"
-                  android:layout_height="wrap_content"
-                  android:textColor="@color/text_dim"
-                  android:textSize="10sp"
-                  android:fontFamily="monospace"
-                  android:gravity="center"/>
+              android:paddingLeft="8dp"
+              android:paddingRight="8dp"
+              android:paddingTop="3dp"
+              android:paddingBottom="3dp">
 
               <LinearLayout
-                  android:id="@+id/itemBody"
-                  android:layout_width="0dp"
-                  android:layout_height="wrap_content"
-                  android:layout_weight="1"
-                  android:orientation="vertical"
-                  android:padding="12dp">
+                  android:id="@+id/cardBg"
+                  android:layout_width="match_parent"
+                  android:layout_height="52dp"
+                  android:orientation="horizontal"
+                  android:gravity="center_vertical"
+                  android:paddingStart="6dp"
+                  android:paddingEnd="10dp">
+
+                  <View
+                      android:id="@+id/accentBar"
+                      android:layout_width="4dp"
+                      android:layout_height="30dp"
+                      android:layout_marginEnd="10dp"
+                      android:visibility="invisible"/>
+
+                  <TextView
+                      android:id="@+id/gameNum"
+                      android:layout_width="32dp"
+                      android:layout_height="wrap_content"
+                      android:textSize="10sp"
+                      android:fontFamily="monospace"/>
 
                   <TextView
                       android:id="@+id/gameName"
-                      android:layout_width="match_parent"
+                      android:layout_width="0dp"
                       android:layout_height="wrap_content"
-                      android:textColor="@color/text_soft"
-                      android:textSize="15sp"
-                      android:ellipsize="end"
-                      android:singleLine="true"
-                      android:textStyle="bold"/>
-
-                  <TextView
-                      android:id="@+id/gameFile"
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:layout_marginTop="4dp"
-                      android:textColor="@color/text_dim"
-                      android:textSize="10sp"
+                      android:layout_weight="1"
+                      android:textSize="14sp"
                       android:ellipsize="end"
                       android:singleLine="true"/>
               </LinearLayout>
-          </LinearLayout>
-          EOF
+          </FrameLayout>
+          L3_EOF
 
-      - name: Create Java files
+      - name: Create Java Files
         run: |
-          cat > app/src/main/java/com/khaloahmed/launcher/Config.java << 'EOF'
+          cat > app/src/main/java/com/khaloahmed/launcher/Config.java << 'CF_EOF'
           package com.khaloahmed.launcher;
-
+          import android.graphics.Color;
           public class Config {
               public static final String[][] PLATFORMS = {
-                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe", ".bin,.iso,.img,.pbp,.cue", "🎮"},
-                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp", ".iso,.cso,.pbp", "🕹️"},
-                  {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbcfree", ".gbc,.gb,.zip", "👾"},
+                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",
+                   ".bin,.iso,.img,.pbp,.cue", "\uD83C\uDFAE", "#FF3355"},
+                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",
+                   ".iso,.cso,.pbp", "\uD83D\uDD79", "#2299FF"},
+                  {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbcfree",
+                   ".gbc,.gb,.zip", "\uD83D\uDC7E", "#44DD66"},
               };
-
               public static final String[] IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"};
-          }
-          EOF
-
-          cat > app/src/main/java/com/khaloahmed/launcher/GameItem.java << 'EOF'
-          package com.khaloahmed.launcher;
-
-          public class GameItem {
-              public String name;
-              public String file;
-              public String artPath;
-              public String platform;
-
-              public GameItem(String name, String file, String artPath, String platform) {
-                  this.name = name;
-                  this.file = file;
-                  this.artPath = artPath;
-                  this.platform = platform;
+              public static int accent(int idx) {
+                  return Color.parseColor(PLATFORMS[idx][5]);
+              }
+              public static int accentA(int idx, int alpha) {
+                  return (accent(idx) & 0x00ffffff) | (alpha << 24);
               }
           }
-          EOF
+          CF_EOF
 
-          cat > app/src/main/java/com/khaloahmed/launcher/GameScanner.java << 'EOF'
+          cat > app/src/main/java/com/khaloahmed/launcher/GameItem.java << 'GI_EOF'
           package com.khaloahmed.launcher;
+          public class GameItem {
+              public final String name, file, artPath, platform;
+              public GameItem(String name, String file, String artPath, String platform) {
+                  this.name = name; this.file = file;
+                  this.artPath = artPath; this.platform = platform;
+              }
+          }
+          GI_EOF
 
+          cat > app/src/main/java/com/khaloahmed/launcher/GameScanner.java << 'GS_EOF'
+          package com.khaloahmed.launcher;
           import java.io.File;
-          import java.util.ArrayList;
-          import java.util.Arrays;
-          import java.util.Collections;
-          import java.util.Comparator;
-          import java.util.HashMap;
-          import java.util.HashSet;
-          import java.util.List;
-          import java.util.Locale;
-          import java.util.Map;
-          import java.util.Set;
-
+          import java.util.*;
           public class GameScanner {
               public static List<GameItem> scan(String platformKey) {
-                  List<GameItem> result = new ArrayList<>();
-                  String[] cfg = null;
-
-                  for (String[] p : Config.PLATFORMS) {
-                      if (p[0].equals(platformKey)) {
-                          cfg = p;
-                          break;
-                      }
-                  }
-
-                  if (cfg == null) return result;
-
-                  String folderPath = cfg[1];
-                  String extsStr = cfg[3];
-                  Set<String> exts = new HashSet<>(Arrays.asList(extsStr.split(",")));
-
-                  File dir = new File(folderPath);
-                  if (!dir.exists() || !dir.isDirectory()) return result;
-
+                  List<GameItem> out = new ArrayList<>();
+                  String[] cfg = find(platformKey);
+                  if (cfg == null) return out;
+                  File dir = new File(cfg[1]);
+                  if (!dir.exists() || !dir.isDirectory()) return out;
                   File[] files = dir.listFiles();
-                  if (files == null) return result;
-
-                  Map<String, String> artMap = new HashMap<>();
+                  if (files == null) return out;
+                  Set<String> exts = new HashSet<>(Arrays.asList(cfg[3].split(",")));
+                  Map<String, String> art = new HashMap<>();
                   for (File f : files) {
-                      if (!f.isFile()) continue;
-                      String n = f.getName().toLowerCase(Locale.US);
+                      String n = f.getName().toLowerCase();
                       for (String ie : Config.IMAGE_EXTS) {
-                          if (n.endsWith(ie)) {
-                              int dot = n.lastIndexOf('.');
-                              if (dot > 0) {
-                                  artMap.put(n.substring(0, dot), f.getAbsolutePath());
-                              }
-                          }
+                          if (n.endsWith(ie)) art.put(n.substring(0, n.lastIndexOf('.')), f.getAbsolutePath());
                       }
                   }
-
                   for (File f : files) {
                       if (!f.isFile()) continue;
-
-                      String nm = f.getName();
-                      String nl = nm.toLowerCase(Locale.US);
-                      boolean isRom = false;
-
-                      for (String x : exts) {
-                          if (nl.endsWith(x.trim())) {
-                              isRom = true;
-                              break;
-                          }
-                      }
-
-                      if (!isRom) continue;
-
+                      String nm = f.getName(), nl = nm.toLowerCase();
+                      boolean rom = false;
+                      for (String x : exts) if (nl.endsWith(x.trim())) { rom = true; break; }
+                      if (!rom) continue;
                       String base = nm.contains(".") ? nm.substring(0, nm.lastIndexOf('.')) : nm;
-                      String displayName = base.replaceAll("[_\\-]+", " ").replaceAll("\\s+", " ").trim();
-                      String art = artMap.containsKey(base.toLowerCase(Locale.US)) ? artMap.get(base.toLowerCase(Locale.US)) : "";
-
-                      result.add(new GameItem(displayName, nm, art, platformKey));
+                      String display = base.replaceAll("[_\\-]+", " ").trim();
+                      String a = art.containsKey(base.toLowerCase()) ? art.get(base.toLowerCase()) : "";
+                      out.add(new GameItem(display, nm, a, platformKey));
                   }
-
-                  Collections.sort(result, new Comparator<GameItem>() {
-                      @Override
-                      public int compare(GameItem a, GameItem b) {
-                          return a.name.compareToIgnoreCase(b.name);
-                      }
-                  });
-
-                  return result;
+                  Collections.sort(out, (a, b) -> a.name.compareToIgnoreCase(b.name));
+                  return out;
+              }
+              private static String[] find(String key) {
+                  for (String[] p : Config.PLATFORMS) if (p[0].equals(key)) return p;
+                  return null;
               }
           }
-          EOF
+          GS_EOF
 
-          cat > app/src/main/java/com/khaloahmed/launcher/PlatformActivity.java << 'EOF'
+      - name: Create PlatformActivity
+        run: |
+          cat > app/src/main/java/com/khaloahmed/launcher/PlatformActivity.java << 'PA_EOF'
           package com.khaloahmed.launcher;
-
           import android.app.Activity;
           import android.content.Intent;
+          import android.graphics.Color;
           import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
           import android.os.Bundle;
           import android.view.Gravity;
           import android.view.InputDevice;
@@ -762,200 +521,152 @@ jobs:
           import android.view.animation.AnimationUtils;
           import android.widget.LinearLayout;
           import android.widget.TextView;
-
-          import java.util.List;
-
           public class PlatformActivity extends Activity {
-              private int selectedIdx = 0;
-              private boolean startPressed = false;
-              private boolean selectPressed = false;
+              private int sel = 0;
+              private boolean startHeld, selectHeld;
               private LinearLayout platformRow;
-              private int[] gameCounts;
-              private boolean joystickCentered = true;
-              private long lastMove = 0;
-              private static final long JOY_MOVE_DELAY = 120;
-
-              @Override
-              protected void onCreate(Bundle s) {
+              private int[] counts;
+              private long lastMove;
+              private static final long MOVE_DELAY = 140;
+              @Override protected void onCreate(Bundle s) {
                   super.onCreate(s);
-                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                  getWindow().getDecorView().setSystemUiVisibility(
-                          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                  | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
+                  fullscreen();
                   setContentView(R.layout.activity_platform);
                   platformRow = findViewById(R.id.platformRow);
-
-                  gameCounts = new int[Config.PLATFORMS.length];
-                  for (int i = 0; i < Config.PLATFORMS.length; i++) {
-                      List<GameItem> games = GameScanner.scan(Config.PLATFORMS[i][0]);
-                      gameCounts[i] = games.size();
-                  }
-
-                  drawPlatforms();
+                  counts = new int[Config.PLATFORMS.length];
+                  for (int i = 0; i < Config.PLATFORMS.length; i++)
+                      counts[i] = GameScanner.scan(Config.PLATFORMS[i][0]).size();
+                  draw(true);
               }
-
-              private LinearLayout createPlatformCard(String[] p, boolean selected, int count) {
-                  LinearLayout card = new LinearLayout(this);
-                  card.setOrientation(LinearLayout.VERTICAL);
-                  card.setGravity(Gravity.CENTER);
-
-                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(240, 240);
-                  lp.setMargins(24, 0, 24, 0);
-                  card.setLayoutParams(lp);
-                  card.setPadding(18, 18, 18, 18);
-                  card.setBackgroundResource(selected ? R.drawable.card_platform_selected : R.drawable.card_platform);
-                  card.setAlpha(selected ? 1f : 0.58f);
-                  card.setElevation(selected ? 22f : 5f);
-
-                  TextView icon = new TextView(this);
-                  icon.setText(p[4]);
-                  icon.setTextSize(selected ? 46 : 38);
-                  icon.setGravity(Gravity.CENTER);
-                  card.addView(icon);
-
-                  TextView name = new TextView(this);
-                  name.setText(p[0]);
-                  name.setTextSize(selected ? 18 : 14);
-                  name.setTextColor(selected ? 0xffF5C451 : 0xff6E7A99);
-                  name.setGravity(Gravity.CENTER);
-                  name.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
-                  name.setLetterSpacing(0.14f);
-                  name.setPadding(0, 10, 0, 0);
-                  card.addView(name);
-
-                  TextView sub = new TextView(this);
-                  sub.setText(count + " GAMES");
-                  sub.setTextSize(10);
-                  sub.setTextColor(selected ? 0xffD7DDF0 : 0xff586683);
-                  sub.setGravity(Gravity.CENTER);
-                  sub.setPadding(0, 6, 0, 0);
-                  card.addView(sub);
-
-                  if (selected) {
-                      card.startAnimation(AnimationUtils.loadAnimation(this, R.anim.scale_pop));
-                  }
-
-                  return card;
-              }
-
-              private void drawPlatforms() {
+              private void draw(boolean anim) {
                   platformRow.removeAllViews();
                   for (int i = 0; i < Config.PLATFORMS.length; i++) {
+                      String[] p = Config.PLATFORMS[i];
+                      boolean isSel = (i == sel);
+                      int accent = Config.accent(i);
+                      LinearLayout card = new LinearLayout(this);
+                      card.setOrientation(LinearLayout.VERTICAL);
+                      card.setGravity(Gravity.CENTER);
+                      int size = isSel ? dp(248) : dp(198);
+                      LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+                      lp.setMargins(dp(18), 0, dp(18), 0);
+                      card.setLayoutParams(lp);
+                      card.setPadding(dp(10), dp(10), dp(10), dp(10));
+                      GradientDrawable bg = new GradientDrawable();
+                      bg.setCornerRadius(dp(22));
+                      if (isSel) {
+                          bg.setColor(mixColor(accent, 0xff0a0a18, 0.20f));
+                          bg.setStroke(dp(3), accent);
+                          card.setElevation(dp(12));
+                          card.setAlpha(1f);
+                      } else {
+                          bg.setColor(0xff111126);
+                          bg.setStroke(dp(1), 0xff1a1a32);
+                          card.setElevation(dp(2));
+                          card.setAlpha(0.42f);
+                      }
+                      card.setBackground(bg);
+                      TextView icon = new TextView(this);
+                      icon.setText(p[4]);
+                      icon.setTextSize(isSel ? 46 : 34);
+                      icon.setGravity(Gravity.CENTER);
+                      card.addView(icon);
+                      TextView name = new TextView(this);
+                      name.setText(p[0]);
+                      name.setTextSize(isSel ? 15 : 11);
+                      name.setTextColor(isSel ? accent : 0xff334060);
+                      name.setGravity(Gravity.CENTER);
+                      name.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+                      name.setLetterSpacing(0.2f);
+                      name.setPadding(0, dp(5), 0, 0);
+                      card.addView(name);
+                      TextView cnt = new TextView(this);
+                      cnt.setText(counts[i] + " GAMES");
+                      cnt.setTextSize(9);
+                      cnt.setTextColor(isSel ? Config.accentA(i, 170) : 0xff222240);
+                      cnt.setGravity(Gravity.CENTER);
+                      cnt.setTypeface(Typeface.MONOSPACE);
+                      cnt.setPadding(0, dp(3), 0, 0);
+                      card.addView(cnt);
                       final int idx = i;
-                      LinearLayout card = createPlatformCard(Config.PLATFORMS[i], i == selectedIdx, gameCounts[i]);
-                      card.setOnClickListener(new View.OnClickListener() {
-                          @Override
-                          public void onClick(View v) {
-                              openPlatform(idx);
-                          }
-                      });
+                      card.setOnClickListener(v -> open(idx));
                       platformRow.addView(card);
+                      if (isSel && anim) card.startAnimation(AnimationUtils.loadAnimation(this, R.anim.pop_in));
                   }
               }
-
-              private void moveLeft() {
-                  if (selectedIdx > 0) {
-                      selectedIdx--;
-                      drawPlatforms();
-                  }
-              }
-
-              private void moveRight() {
-                  if (selectedIdx < Config.PLATFORMS.length - 1) {
-                      selectedIdx++;
-                      drawPlatforms();
-                  }
-              }
-
-              private void openPlatform(int idx) {
-                  Intent intent = new Intent(this, GamesActivity.class);
-                  intent.putExtra("platformIdx", idx);
-                  startActivity(intent);
+              private void open(int idx) {
+                  sel = idx;
+                  Intent it = new Intent(this, GamesActivity.class);
+                  it.putExtra("platformIdx", idx);
+                  startActivity(it);
                   overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
               }
-
-              @Override
-              public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = true;
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
-
-                  if (startPressed && selectPressed) {
-                      finish();
-                      return true;
-                  }
-
-                  switch (keyCode) {
+              @Override public boolean onKeyDown(int kc, KeyEvent e) {
+                  if (kc == KeyEvent.KEYCODE_BUTTON_START)  startHeld  = true;
+                  if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) selectHeld = true;
+                  if (startHeld && selectHeld) { finish(); return true; }
+                  switch (kc) {
                       case KeyEvent.KEYCODE_DPAD_LEFT:
-                          moveLeft();
-                          return true;
+                          if (sel > 0) { sel--; draw(true); } return true;
                       case KeyEvent.KEYCODE_DPAD_RIGHT:
-                          moveRight();
-                          return true;
+                          if (sel < Config.PLATFORMS.length-1) { sel++; draw(true); } return true;
                       case KeyEvent.KEYCODE_BUTTON_A:
                       case KeyEvent.KEYCODE_ENTER:
                       case KeyEvent.KEYCODE_DPAD_CENTER:
-                          openPlatform(selectedIdx);
-                          return true;
-                      case KeyEvent.KEYCODE_BUTTON_B:
+                          open(sel); return true;
                       case KeyEvent.KEYCODE_BACK:
-                          finish();
-                          return true;
+                      case KeyEvent.KEYCODE_BUTTON_B:
+                          finish(); return true;
                   }
-                  return super.onKeyDown(keyCode, event);
+                  return super.onKeyDown(kc, e);
               }
-
-              @Override
-              public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = false;
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
-                  return super.onKeyUp(keyCode, event);
+              @Override public boolean onKeyUp(int kc, KeyEvent e) {
+                  if (kc == KeyEvent.KEYCODE_BUTTON_START)  startHeld  = false;
+                  if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) selectHeld = false;
+                  return super.onKeyUp(kc, e);
               }
-
-              @Override
-              public boolean onGenericMotionEvent(MotionEvent event) {
-                  if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
-                          && event.getAction() == MotionEvent.ACTION_MOVE) {
-
-                      float x = event.getAxisValue(MotionEvent.AXIS_HAT_X);
-                      if (Math.abs(x) < 0.2f) x = event.getAxisValue(MotionEvent.AXIS_X);
-
+              @Override public boolean onGenericMotionEvent(MotionEvent ev) {
+                  if ((ev.getSource() & InputDevice.SOURCE_JOYSTICK) != 0
+                          && ev.getAction() == MotionEvent.ACTION_MOVE) {
                       long now = System.currentTimeMillis();
-                      if (Math.abs(x) < 0.45f) {
-                          joystickCentered = true;
-                          return true;
-                      }
-
-                      if (!joystickCentered || now - lastMove < JOY_MOVE_DELAY) return true;
-
-                      joystickCentered = false;
-                      lastMove = now;
-
-                      if (x < 0f) moveLeft();
-                      else moveRight();
-
+                      if (now - lastMove < MOVE_DELAY) return true;
+                      float x = ev.getAxisValue(MotionEvent.AXIS_X);
+                      float hx = ev.getAxisValue(MotionEvent.AXIS_HAT_X);
+                      if ((x < -0.5f || hx < -0.5f) && sel > 0) { sel--; lastMove = now; draw(true); }
+                      else if ((x > 0.5f || hx > 0.5f) && sel < Config.PLATFORMS.length-1) { sel++; lastMove = now; draw(true); }
                       return true;
                   }
-                  return super.onGenericMotionEvent(event);
+                  return super.onGenericMotionEvent(ev);
+              }
+              private int mixColor(int a, int b, float f) {
+                  int r = (int)(Color.red(a)*f   + Color.red(b)*(1-f));
+                  int g = (int)(Color.green(a)*f + Color.green(b)*(1-f));
+                  int bl= (int)(Color.blue(a)*f  + Color.blue(b)*(1-f));
+                  return Color.rgb(r, g, bl);
+              }
+              private int dp(float d) { return (int)(d * getResources().getDisplayMetrics().density); }
+              private void fullscreen() {
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().getDecorView().setSystemUiVisibility(
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
               }
           }
-          EOF
+          PA_EOF
 
-          cat > app/src/main/java/com/khaloahmed/launcher/GamesActivity.java << 'EOF'
+      - name: Create GamesActivity
+        run: |
+          cat > app/src/main/java/com/khaloahmed/launcher/GamesActivity.java << 'GA_EOF'
           package com.khaloahmed.launcher;
-
           import android.app.Activity;
+          import android.content.ComponentName;
           import android.content.Intent;
-          import android.content.pm.PackageManager;
-          import android.content.pm.ResolveInfo;
           import android.graphics.Bitmap;
           import android.graphics.BitmapFactory;
+          import android.graphics.drawable.GradientDrawable;
           import android.net.Uri;
           import android.os.Bundle;
           import android.os.Handler;
-          import android.os.Looper;
+          import android.os.StrictMode;
           import android.view.InputDevice;
           import android.view.KeyEvent;
           import android.view.MotionEvent;
@@ -963,459 +674,316 @@ jobs:
           import android.view.ViewGroup;
           import android.view.WindowManager;
           import android.view.animation.AnimationUtils;
-          import android.widget.AdapterView;
           import android.widget.BaseAdapter;
           import android.widget.ImageView;
-          import android.widget.LinearLayout;
           import android.widget.ListView;
           import android.widget.TextView;
           import android.widget.Toast;
-
-          import androidx.core.content.FileProvider;
-
           import java.io.File;
           import java.util.List;
-
           public class GamesActivity extends Activity {
               private int platformIdx;
               private List<GameItem> games;
-              private int selectedGame = 0;
-
-              private boolean startPressed = false;
-              private boolean selectPressed = false;
-              private boolean holdUp = false;
-              private boolean holdDown = false;
-              private boolean joystickCentered = true;
-
-              private ListView listView;
+              private int sel = 0;
+              private boolean startHeld, selectHeld;
+              private ListView list;
               private ImageView previewImg, previewBg;
-              private TextView noArtIcon, previewTitle, previewSub, platformName, gameCount, statusText;
+              private TextView noArtIcon, previewTitle, platformName, gameCount;
+              private final Handler handler = new Handler();
+              private Runnable previewRun;
+              private Thread imgThread;
+              private long lastInput;
 
-              private final Handler handler = new Handler(Looper.getMainLooper());
-              private Runnable previewRunnable;
+              // Adaptive delay: faster as you hold longer
+              private long delay(int repeat) {
+                  if (repeat == 0)  return 150;
+                  if (repeat < 5)   return 100;
+                  if (repeat < 12)  return 52;
+                  if (repeat < 22)  return 28;
+                  return 16;
+              }
 
-              private long holdStartTime = 0L;
-              private long lastJoyMove = 0L;
-              private static final long JOYSTICK_DELAY = 70L;
-
-              private final Runnable holdScrollRunnable = new Runnable() {
-                  @Override
-                  public void run() {
-                      if (!holdUp && !holdDown) return;
-                      int step = getAcceleratedStep();
-                      if (holdUp) moveSelection(-step, true);
-                      if (holdDown) moveSelection(step, true);
-                      handler.postDelayed(this, getHoldInterval());
-                  }
-              };
-
-              @Override
-              protected void onCreate(Bundle s) {
+              @Override protected void onCreate(Bundle s) {
                   super.onCreate(s);
-
-                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                  getWindow().getDecorView().setSystemUiVisibility(
-                          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                  | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-
+                  StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
+                  fullscreen();
                   setContentView(R.layout.activity_games);
-
-                  platformIdx = getIntent().getIntExtra("platformIdx", 0);
-                  String[] cfg = Config.PLATFORMS[platformIdx];
-                  games = GameScanner.scan(cfg[0]);
-
-                  listView = findViewById(R.id.gameList);
-                  previewImg = findViewById(R.id.previewImg);
-                  previewBg = findViewById(R.id.previewBg);
-                  noArtIcon = findViewById(R.id.noArtIcon);
+                  platformIdx  = getIntent().getIntExtra("platformIdx", 0);
+                  games        = GameScanner.scan(Config.PLATFORMS[platformIdx][0]);
+                  list         = findViewById(R.id.gameList);
+                  previewImg   = findViewById(R.id.previewImg);
+                  previewBg    = findViewById(R.id.previewBg);
+                  noArtIcon    = findViewById(R.id.noArtIcon);
                   previewTitle = findViewById(R.id.previewTitle);
-                  previewSub = findViewById(R.id.previewSub);
                   platformName = findViewById(R.id.platformName);
-                  gameCount = findViewById(R.id.gameCount);
-                  statusText = findViewById(R.id.statusText);
-
-                  platformName.setText(cfg[0]);
+                  gameCount    = findViewById(R.id.gameCount);
+                  int accent = Config.accent(platformIdx);
+                  platformName.setText(Config.PLATFORMS[platformIdx][0]);
+                  platformName.setTextColor(accent);
                   gameCount.setText(games.size() + " GAMES");
-                  statusText.setText(isAppInstalled(cfg[2]) ? "EMULATOR READY" : "EMULATOR NOT VISIBLE");
-
-                  setupList();
+                  findViewById(R.id.separator).setBackgroundColor(accent);
+                  GradientDrawable badgeBg = new GradientDrawable();
+                  badgeBg.setColor(Config.accentA(platformIdx, 22));
+                  findViewById(R.id.platformBadge).setBackground(badgeBg);
+                  list.setAdapter(new GameAdapter());
+                  list.setOnItemClickListener((p, v, pos, id) -> {
+                      sel = pos; refresh(); schedulePreview();
+                  });
                   updatePreview(false);
               }
 
-              private void setupList() {
-                  final GameAdapter adapter = new GameAdapter();
-                  listView.setAdapter(adapter);
-
-                  listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                      @Override
-                      public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
-                          selectedGame = pos;
-                          adapter.notifyDataSetChanged();
-                          alignSelection(false);
-                          schedulePreview(false);
-                      }
-                  });
+              @Override protected void onResume() {
+                  super.onResume();
+                  fullscreen();
+                  list.post(this::centerList);
               }
 
-              private void alignSelection(boolean smooth) {
-                  if (games.isEmpty()) return;
-                  int offset = 120;
-                  if (smooth) listView.smoothScrollToPositionFromTop(selectedGame, offset, 90);
-                  else listView.setSelectionFromTop(selectedGame, offset);
+              @Override protected void onDestroy() {
+                  super.onDestroy();
+                  if (imgThread != null) imgThread.interrupt();
+                  handler.removeCallbacksAndMessages(null);
               }
 
-              private void schedulePreview(boolean animate) {
-                  if (previewRunnable != null) handler.removeCallbacks(previewRunnable);
-
-                  previewRunnable = new Runnable() {
-                      @Override
-                      public void run() {
-                          updatePreview(animate);
-                      }
-                  };
-                  handler.postDelayed(previewRunnable, 55);
+              private void refresh() {
+                  ((GameAdapter) list.getAdapter()).notifyDataSetChanged();
+                  list.post(this::centerList);
               }
 
-              private void updatePreview(boolean animate) {
-                  if (games.isEmpty()) {
-                      previewTitle.setText("لا توجد ألعاب");
-                      previewSub.setText("ضع الرومات داخل المجلد الصحيح");
-                      previewImg.setVisibility(View.GONE);
-                      previewBg.setVisibility(View.GONE);
-                      noArtIcon.setVisibility(View.VISIBLE);
-                      noArtIcon.setText(Config.PLATFORMS[platformIdx][4]);
-                      return;
-                  }
+              private void centerList() {
+                  if (list.getHeight() == 0) return;
+                  list.setSelectionFromTop(sel, list.getHeight() / 3);
+              }
 
-                  GameItem g = games.get(selectedGame);
+              private void schedulePreview() {
+                  if (previewRun != null) handler.removeCallbacks(previewRun);
+                  previewRun = () -> updatePreview(true);
+                  handler.postDelayed(previewRun, 80);
+              }
+
+              private void updatePreview(boolean anim) {
+                  if (games.isEmpty()) { showNoArt(); previewTitle.setText("لا توجد العاب"); return; }
+                  GameItem g = games.get(sel);
                   previewTitle.setText(g.name);
-                  previewSub.setText(g.file);
-
-                  Bitmap bmp = null;
-                  if (g.artPath != null && !g.artPath.isEmpty()) {
-                      try {
-                          BitmapFactory.Options options = new BitmapFactory.Options();
-                          options.inPreferredConfig = Bitmap.Config.RGB_565;
-                          options.inDither = true;
-                          bmp = BitmapFactory.decodeFile(g.artPath, options);
-                      } catch (Exception ignored) { }
-                  }
-
-                  if (bmp != null) {
-                      previewImg.setImageBitmap(bmp);
-                      previewBg.setImageBitmap(bmp);
-                      previewImg.setVisibility(View.VISIBLE);
-                      previewBg.setVisibility(View.VISIBLE);
-                      noArtIcon.setVisibility(View.GONE);
-
-                      if (animate) {
-                          previewImg.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
-                      }
-                  } else {
-                      previewImg.setImageDrawable(null);
-                      previewBg.setImageDrawable(null);
-                      previewImg.setVisibility(View.GONE);
-                      previewBg.setVisibility(View.GONE);
-                      noArtIcon.setVisibility(View.VISIBLE);
-                      noArtIcon.setText(Config.PLATFORMS[platformIdx][4]);
-                  }
+                  if (g.artPath.isEmpty() || !new File(g.artPath).exists()) { showNoArt(); return; }
+                  final String path = g.artPath;
+                  if (imgThread != null && imgThread.isAlive()) imgThread.interrupt();
+                  imgThread = new Thread(() -> {
+                      BitmapFactory.Options opts = new BitmapFactory.Options();
+                      opts.inPreferredConfig = Bitmap.Config.RGB_565;
+                      Bitmap bmp = BitmapFactory.decodeFile(path, opts);
+                      if (bmp == null || Thread.currentThread().isInterrupted()) return;
+                      runOnUiThread(() -> {
+                          previewImg.setImageBitmap(bmp);
+                          previewBg.setImageBitmap(bmp);
+                          previewImg.setVisibility(View.VISIBLE);
+                          previewBg.setVisibility(View.VISIBLE);
+                          noArtIcon.setVisibility(View.GONE);
+                          if (anim) previewImg.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
+                      });
+                  });
+                  imgThread.start();
               }
 
-              private boolean isAppInstalled(String packageName) {
-                  try {
-                      getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
-                      return true;
-                  } catch (Exception e) {
-                      return false;
-                  }
+              private void showNoArt() {
+                  previewImg.setVisibility(View.GONE);
+                  previewBg.setVisibility(View.GONE);
+                  noArtIcon.setVisibility(View.VISIBLE);
+                  noArtIcon.setText(Config.PLATFORMS[platformIdx][4]);
               }
 
-              private Intent getLaunchIntentSafely(String packageName) {
-                  Intent launch = getPackageManager().getLaunchIntentForPackage(packageName);
-                  if (launch != null) return launch;
-
-                  Intent query = new Intent(Intent.ACTION_MAIN);
-                  query.addCategory(Intent.CATEGORY_LAUNCHER);
-                  query.setPackage(packageName);
-
-                  List<ResolveInfo> infos = getPackageManager().queryIntentActivities(query, 0);
-                  if (infos == null || infos.isEmpty()) return null;
-
-                  ResolveInfo info = infos.get(0);
-                  Intent explicit = new Intent(Intent.ACTION_MAIN);
-                  explicit.setClassName(info.activityInfo.packageName, info.activityInfo.name);
-                  return explicit;
-              }
-
-              private void launchGame() {
+              private void launch() {
                   if (games.isEmpty()) return;
-
-                  GameItem g = games.get(selectedGame);
+                  GameItem g = games.get(sel);
                   String[] cfg = Config.PLATFORMS[platformIdx];
-                  String packageName = cfg[2];
-                  File romFile = new File(cfg[1], g.file);
-
-                  if (!romFile.exists()) {
-                      toast("ملف اللعبة غير موجود");
-                      return;
+                  String romPath = cfg[1] + "/" + g.file;
+                  File rom = new File(romPath);
+                  if (!rom.exists()) { toast("ملف اللعبة غير موجود"); return; }
+                  String pkg = cfg[2];
+                  if (!isInstalled(pkg)) { toast("المحاكي غير مثبت:\n" + pkg); return; }
+                  switch (pkg) {
+                      case "com.epsxe.ePSXe":  launchPS1(rom, romPath); break;
+                      case "org.ppsspp.ppsspp": launchPSP(rom, romPath); break;
+                      default: launchGeneric(pkg, rom); break;
                   }
+              }
 
-                  Intent intent = getLaunchIntentSafely(packageName);
-                  if (intent == null) {
-                      toast("المحاكي غير ظاهر للتطبيق");
-                      statusText.setText("CHECK MANIFEST / QUERIES");
-                      return;
-                  }
-
+              private void launchPS1(File rom, String romPath) {
+                  // Method A: direct activity + ROM extra (auto-loads ROM in ePSXe)
                   try {
-                      Uri contentUri = FileProvider.getUriForFile(
-                              this,
-                              "com.khaloahmed.launcher.fileprovider",
-                              romFile
-                      );
+                      Intent i = new Intent(Intent.ACTION_MAIN);
+                      i.setComponent(new ComponentName("com.epsxe.ePSXe", "com.epsxe.ePSXe.ePSXe"));
+                      i.putExtra("com.epsxe.ePSXe.ROM", romPath);
+                      i.putExtra("ROM", romPath);
+                      i.setData(Uri.fromFile(rom));
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                      startActivity(i);
+                      return;
+                  } catch (Exception ignored) {}
+                  // Method B: ACTION_VIEW with file URI
+                  try {
+                      Intent i = new Intent(Intent.ACTION_VIEW);
+                      i.setData(Uri.parse("file://" + romPath));
+                      i.setPackage("com.epsxe.ePSXe");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      startActivity(i);
+                      return;
+                  } catch (Exception ignored) {}
+                  launchGeneric("com.epsxe.ePSXe", rom);
+              }
 
-                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                      intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                      intent.setData(contentUri);
-                      intent.setType("*/*");
+              private void launchPSP(File rom, String romPath) {
+                  try {
+                      Intent i = new Intent(Intent.ACTION_MAIN);
+                      i.setComponent(new ComponentName("org.ppsspp.ppsspp", "org.ppsspp.ppsspp.PpssppActivity"));
+                      i.putExtra("org.ppsspp.ppsspp.Shortcuts", romPath);
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  } catch (Exception e) { launchGeneric("org.ppsspp.ppsspp", rom); }
+              }
 
-                      String absolutePath = romFile.getAbsolutePath();
-                      intent.putExtra("romPath", absolutePath);
-                      intent.putExtra("path", absolutePath);
-                      intent.putExtra("file", absolutePath);
-                      intent.putExtra(Intent.EXTRA_STREAM, contentUri);
-
-                      if ("com.epsxe.ePSXe".equals(packageName)) {
-                          intent.putExtra("com.epsxe.ePSXe.ROM", absolutePath);
-                          intent.putExtra("ROM", absolutePath);
-                      }
-
-                      if ("org.ppsspp.ppsspp".equals(packageName)) {
-                          intent.putExtra("GamePath", absolutePath);
-                          intent.putExtra("org.ppsspp.ppsspp.Shortcuts", absolutePath);
-                      }
-
-                      grantUriPermission(packageName, contentUri,
-                              Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-
-                      startActivity(intent);
-                      toast("جاري تشغيل اللعبة");
-
+              private void launchGeneric(String pkg, File rom) {
+                  try {
+                      Intent i = new Intent(Intent.ACTION_VIEW);
+                      i.setData(Uri.fromFile(rom));
+                      i.setPackage(pkg);
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      startActivity(i);
                   } catch (Exception e) {
-                      e.printStackTrace();
-                      toast("فشل تشغيل اللعبة");
-                      statusText.setText("LAUNCH FAILED");
+                      try {
+                          Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
+                          if (i != null) startActivity(i);
+                          else toast("تعذر فتح المحاكي");
+                      } catch (Exception e2) { toast("خطأ في التشغيل"); }
                   }
               }
 
-              private void toast(String msg) {
-                  Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+              private boolean isInstalled(String pkg) {
+                  try { getPackageManager().getPackageInfo(pkg, 0); return true; }
+                  catch (Exception e) { return false; }
               }
 
-              private void moveSelection(int delta, boolean smooth) {
-                  if (games.isEmpty()) return;
-                  int old = selectedGame;
-                  selectedGame += delta;
-                  if (selectedGame < 0) selectedGame = 0;
-                  if (selectedGame > games.size() - 1) selectedGame = games.size() - 1;
+              private void toast(String m) { Toast.makeText(this, m, Toast.LENGTH_SHORT).show(); }
 
-                  if (selectedGame != old) {
-                      ((GameAdapter) listView.getAdapter()).notifyDataSetChanged();
-                      alignSelection(smooth);
-                      schedulePreview(true);
-                  }
-              }
-
-              private int getAcceleratedStep() {
-                  long held = System.currentTimeMillis() - holdStartTime;
-                  if (held > 1700) return 5;
-                  if (held > 1100) return 3;
-                  if (held > 550) return 2;
-                  return 1;
-              }
-
-              private long getHoldInterval() {
-                  long held = System.currentTimeMillis() - holdStartTime;
-                  if (held > 1700) return 45;
-                  if (held > 1100) return 60;
-                  if (held > 550) return 80;
-                  return 120;
-              }
-
-              private void startHold(boolean up) {
-                  stopHold();
-                  holdStartTime = System.currentTimeMillis();
-                  holdUp = up;
-                  holdDown = !up;
-                  handler.postDelayed(holdScrollRunnable, 260);
-              }
-
-              private void stopHold() {
-                  holdUp = false;
-                  holdDown = false;
-                  handler.removeCallbacks(holdScrollRunnable);
-              }
-
-              @Override
-              public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = true;
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
-
-                  if (startPressed && selectPressed) {
-                      finish();
-                      finishAffinity();
-                      return true;
-                  }
-
-                  switch (keyCode) {
+              @Override public boolean onKeyDown(int kc, KeyEvent e) {
+                  if (kc == KeyEvent.KEYCODE_BUTTON_START)  startHeld  = true;
+                  if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) selectHeld = true;
+                  if (startHeld && selectHeld) { finishAffinity(); return true; }
+                  long now = System.currentTimeMillis();
+                  int rep = e.getRepeatCount();
+                  switch (kc) {
                       case KeyEvent.KEYCODE_DPAD_UP:
-                          if (event.getRepeatCount() == 0) {
-                              moveSelection(-1, false);
-                              startHold(true);
-                          }
+                          if (now - lastInput < delay(rep)) return true;
+                          if (sel > 0) { lastInput = now; sel--; refresh(); schedulePreview(); }
                           return true;
-
                       case KeyEvent.KEYCODE_DPAD_DOWN:
-                          if (event.getRepeatCount() == 0) {
-                              moveSelection(1, false);
-                              startHold(false);
-                          }
+                          if (now - lastInput < delay(rep)) return true;
+                          if (sel < games.size()-1) { lastInput = now; sel++; refresh(); schedulePreview(); }
                           return true;
-
                       case KeyEvent.KEYCODE_BUTTON_A:
                       case KeyEvent.KEYCODE_ENTER:
                       case KeyEvent.KEYCODE_DPAD_CENTER:
-                          launchGame();
-                          return true;
-
+                          if (rep == 0) { lastInput = now; launch(); } return true;
                       case KeyEvent.KEYCODE_BUTTON_B:
                       case KeyEvent.KEYCODE_BACK:
                           finish();
                           overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
                           return true;
                   }
-
-                  return super.onKeyDown(keyCode, event);
+                  return super.onKeyDown(kc, e);
               }
 
-              @Override
-              public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = false;
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
-
-                  if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                      stopHold();
-                      return true;
-                  }
-
-                  return super.onKeyUp(keyCode, event);
+              @Override public boolean onKeyUp(int kc, KeyEvent e) {
+                  if (kc == KeyEvent.KEYCODE_BUTTON_START)  startHeld  = false;
+                  if (kc == KeyEvent.KEYCODE_BUTTON_SELECT) selectHeld = false;
+                  return super.onKeyUp(kc, e);
               }
 
-              @Override
-              public boolean onGenericMotionEvent(MotionEvent event) {
-                  if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
-                          && event.getAction() == MotionEvent.ACTION_MOVE) {
-
-                      float y = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-                      if (Math.abs(y) < 0.2f) y = event.getAxisValue(MotionEvent.AXIS_Y);
-
+              @Override public boolean onGenericMotionEvent(MotionEvent ev) {
+                  if ((ev.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
+                          && ev.getAction() == MotionEvent.ACTION_MOVE) {
                       long now = System.currentTimeMillis();
-
-                      if (Math.abs(y) < 0.45f) {
-                          joystickCentered = true;
-                          return true;
+                      float y  = ev.getAxisValue(MotionEvent.AXIS_Y);
+                      float hy = ev.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                      long elapsed = now - lastInput;
+                      long d = elapsed < 600 ? 110 : elapsed < 1400 ? 52 : 20;
+                      if (y < -0.5f || hy < -0.5f) {
+                          if (now - lastInput < d || sel <= 0) return true;
+                          lastInput = now; sel--; refresh(); schedulePreview();
+                      } else if (y > 0.5f || hy > 0.5f) {
+                          if (now - lastInput < d || sel >= games.size()-1) return true;
+                          lastInput = now; sel++; refresh(); schedulePreview();
                       }
-
-                      if (!joystickCentered || now - lastJoyMove < JOYSTICK_DELAY) return true;
-
-                      joystickCentered = false;
-                      lastJoyMove = now;
-
-                      if (y < 0f) moveSelection(-1, true);
-                      else moveSelection(1, true);
-
                       return true;
                   }
-
-                  return super.onGenericMotionEvent(event);
+                  return super.onGenericMotionEvent(ev);
               }
 
-              @Override
-              protected void onPause() {
-                  super.onPause();
-                  stopHold();
-              }
-
-              @Override
-              protected void onDestroy() {
-                  super.onDestroy();
-                  stopHold();
-                  if (previewRunnable != null) handler.removeCallbacks(previewRunnable);
-              }
-
-              @Override
-              public void onBackPressed() {
+              @Override public void onBackPressed() {
                   finish();
                   overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
               }
 
+              private void fullscreen() {
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().getDecorView().setSystemUiVisibility(
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+              }
+
+              private int dp(float d) { return (int)(d * getResources().getDisplayMetrics().density); }
+
               class GameAdapter extends BaseAdapter {
-                  @Override
-                  public int getCount() {
-                      return games.size();
-                  }
+                  private final int accent   = Config.accent(platformIdx);
+                  private final int accentBg = Config.accentA(platformIdx, 38);
+                  private final int accentBd = Config.accentA(platformIdx, 140);
 
-                  @Override
-                  public Object getItem(int p) {
-                      return games.get(p);
-                  }
+                  @Override public int getCount() { return games.size(); }
+                  @Override public Object getItem(int p) { return games.get(p); }
+                  @Override public long getItemId(int p) { return p; }
 
-                  @Override
-                  public long getItemId(int p) {
-                      return p;
-                  }
-
-                  @Override
-                  public View getView(int pos, View convertView, ViewGroup parent) {
-                      if (convertView == null) {
-                          convertView = getLayoutInflater().inflate(R.layout.item_game, parent, false);
-                      }
-
-                      GameItem g = games.get(pos);
-
-                      TextView num = convertView.findViewById(R.id.gameNum);
-                      TextView name = convertView.findViewById(R.id.gameName);
-                      TextView file = convertView.findViewById(R.id.gameFile);
-                      LinearLayout body = convertView.findViewById(R.id.itemBody);
-
-                      num.setText(String.format("%02d", pos + 1));
-                      name.setText(g.name);
-                      file.setText(g.file);
-
-                      boolean selected = (pos == selectedGame);
-
-                      if (selected) {
-                          body.setBackgroundResource(R.drawable.item_selected);
-                          name.setTextColor(0xffffffff);
-                          file.setTextColor(0xffB7C1DB);
-                          num.setTextColor(0xff7C5CFF);
-                          convertView.setAlpha(1f);
+                  @Override public View getView(int pos, View cv, ViewGroup parent) {
+                      VH vh;
+                      if (cv == null) {
+                          cv = getLayoutInflater().inflate(R.layout.item_game, parent, false);
+                          vh = new VH();
+                          vh.card = cv.findViewById(R.id.cardBg);
+                          vh.bar  = cv.findViewById(R.id.accentBar);
+                          vh.num  = cv.findViewById(R.id.gameNum);
+                          vh.name = cv.findViewById(R.id.gameName);
+                          cv.setTag(vh);
                       } else {
-                          body.setBackgroundColor(0x00000000);
-                          name.setTextColor(0xffD7DDF0);
-                          file.setTextColor(0xff6E7A99);
-                          num.setTextColor(0xff55627F);
-                          convertView.setAlpha(0.86f);
+                          vh = (VH) cv.getTag();
                       }
-
-                      return convertView;
+                      GameItem g = games.get(pos);
+                      boolean isSel = (pos == sel);
+                      vh.num.setText(String.format("%02d", pos + 1));
+                      vh.name.setText(g.name);
+                      GradientDrawable bgd = new GradientDrawable();
+                      bgd.setCornerRadius(dp(10));
+                      if (isSel) {
+                          bgd.setColor(accentBg);
+                          bgd.setStroke(dp(1), accentBd);
+                          vh.bar.setBackgroundColor(accent);
+                          vh.bar.setVisibility(View.VISIBLE);
+                          vh.num.setTextColor(accentBd);
+                          vh.name.setTextColor(0xffffffff);
+                          vh.name.setTextSize(15f);
+                          vh.name.setTypeface(null, android.graphics.Typeface.BOLD);
+                      } else {
+                          bgd.setColor(0xff0e0e22);
+                          bgd.setStroke(dp(1), 0xff17172c);
+                          vh.bar.setVisibility(View.INVISIBLE);
+                          vh.num.setTextColor(0xff2c3050);
+                          vh.name.setTextColor(0xff5a6a88);
+                          vh.name.setTextSize(13.5f);
+                          vh.name.setTypeface(null, android.graphics.Typeface.NORMAL);
+                      }
+                      vh.card.setBackground(bgd);
+                      return cv;
                   }
+                  class VH { View card, bar; TextView num, name; }
               }
           }
-          EOF
+          GA_EOF
 
       - name: Setup Gradle Wrapper
         run: |
