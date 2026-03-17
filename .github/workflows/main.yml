@@ -104,6 +104,7 @@ jobs:
           import android.content.Intent;
           import android.net.Uri;
           import android.os.Bundle;
+          import android.util.Log;
           import android.view.*;
           import android.webkit.*;
           import org.json.*;
@@ -113,7 +114,7 @@ jobs:
           public class MainActivity extends Activity {
               private WebView webView;
               private long lastInput = 0;
-              private static final long INPUT_DELAY = 250;
+              private static final long INPUT_DELAY = 200;
               private boolean startPressed = false;
               private boolean selectPressed = false;
 
@@ -138,6 +139,7 @@ jobs:
                   ws.setAllowFileAccessFromFileURLs(true);
                   ws.setAllowUniversalAccessFromFileURLs(true);
                   ws.setDomStorageEnabled(true);
+                  webView.setWebChromeClient(new WebChromeClient());
                   webView.addJavascriptInterface(new Bridge(), "Android");
                   webView.loadUrl("file:///android_asset/launcher/index.html");
               }
@@ -152,10 +154,10 @@ jobs:
                       float y = event.getAxisValue(MotionEvent.AXIS_Y);
                       float hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X);
                       float hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-                      if      (x < -0.5f || hatX < -0.5f) { lastInput=now; sendKey("ArrowLeft"); }
-                      else if (x >  0.5f || hatX >  0.5f) { lastInput=now; sendKey("ArrowRight"); }
-                      else if (y < -0.5f || hatY < -0.5f) { lastInput=now; sendKey("ArrowUp"); }
-                      else if (y >  0.5f || hatY >  0.5f) { lastInput=now; sendKey("ArrowDown"); }
+                      if      (x < -0.5f || hatX < -0.5f) { lastInput=now; sendKey("LEFT"); }
+                      else if (x >  0.5f || hatX >  0.5f) { lastInput=now; sendKey("RIGHT"); }
+                      else if (y < -0.5f || hatY < -0.5f) { lastInput=now; sendKey("UP"); }
+                      else if (y >  0.5f || hatY >  0.5f) { lastInput=now; sendKey("DOWN"); }
                       return true;
                   }
                   return super.onGenericMotionEvent(event);
@@ -163,27 +165,32 @@ jobs:
 
               @Override
               public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = true;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed = true;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
                   if (startPressed && selectPressed) { finish(); return true; }
 
+                  long now = System.currentTimeMillis();
+                  if (now - lastInput < INPUT_DELAY) return true;
+
                   switch (keyCode) {
-                      case KeyEvent.KEYCODE_DPAD_UP:             sendKey("ArrowUp");    return true;
-                      case KeyEvent.KEYCODE_DPAD_DOWN:           sendKey("ArrowDown");  return true;
-                      case KeyEvent.KEYCODE_DPAD_LEFT:           sendKey("ArrowLeft");  return true;
-                      case KeyEvent.KEYCODE_DPAD_RIGHT:          sendKey("ArrowRight"); return true;
+                      case KeyEvent.KEYCODE_DPAD_UP:             lastInput=now; sendKey("UP");     return true;
+                      case KeyEvent.KEYCODE_DPAD_DOWN:           lastInput=now; sendKey("DOWN");   return true;
+                      case KeyEvent.KEYCODE_DPAD_LEFT:           lastInput=now; sendKey("LEFT");   return true;
+                      case KeyEvent.KEYCODE_DPAD_RIGHT:          lastInput=now; sendKey("RIGHT");  return true;
                       case KeyEvent.KEYCODE_BUTTON_A:
+                      case KeyEvent.KEYCODE_BUTTON_X:
                       case KeyEvent.KEYCODE_ENTER:
-                      case KeyEvent.KEYCODE_DPAD_CENTER:         sendKey("Enter");      return true;
+                      case KeyEvent.KEYCODE_DPAD_CENTER:         lastInput=now; sendKey("OK");     return true;
                       case KeyEvent.KEYCODE_BUTTON_B:
-                      case KeyEvent.KEYCODE_BACK:                sendKey("Escape");     return true;
+                      case KeyEvent.KEYCODE_BUTTON_Y:
+                      case KeyEvent.KEYCODE_BACK:                lastInput=now; sendKey("BACK");   return true;
                   }
                   return super.onKeyDown(keyCode, event);
               }
 
               @Override
               public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed = false;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
                   return super.onKeyUp(keyCode, event);
               }
@@ -191,7 +198,7 @@ jobs:
               private void sendKey(final String key) {
                   runOnUiThread(new Runnable() {
                       @Override public void run() {
-                          webView.evaluateJavascript("handleKey('" + key + "')", null);
+                          webView.evaluateJavascript("window.handleKey('" + key + "')", null);
                       }
                   });
               }
@@ -231,7 +238,7 @@ jobs:
                                   games.put(o);
                               }
                           }
-                      } catch (Exception e) { e.printStackTrace(); }
+                      } catch (Exception ex) { ex.printStackTrace(); }
                       return games.toString();
                   }
 
@@ -245,13 +252,13 @@ jobs:
                           i.putExtra("com.epsxe.ePSXe.ROM", rom);
                           i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                           startActivity(i);
-                      } catch (Exception e) { e.printStackTrace(); }
+                      } catch (Exception ex) { ex.printStackTrace(); }
                   }
               }
 
               @Override
               public void onBackPressed() {
-                  webView.evaluateJavascript("handleKey('Escape')", null);
+                  webView.evaluateJavascript("window.handleKey('BACK')", null);
               }
           }
           EOF
@@ -260,370 +267,286 @@ jobs:
         run: |
           cat > app/src/main/assets/launcher/index.html << 'HTMLEOF'
           <!DOCTYPE html>
-          <html lang="ar"><head>
+          <html><head>
           <meta charset="UTF-8">
           <title>Khalo Ahmed</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Cairo:wght@300;400;700&display=swap');
-            :root {
-              --bg: #0d0d0d;
-              --left-bg: #111111;
-              --gold: #f0c040;
-              --gold2: #ffaa00;
-              --text: #ffffff;
-              --dim: #555555;
-              --highlight: #1a1a1a;
-            }
+            :root { --bg:#0d0d0d; --gold:#f0c040; --dim:#444; --card:#1a1a1a; }
             * { margin:0; padding:0; box-sizing:border-box; }
-            body { background:var(--bg); color:var(--text); font-family:'Cairo',sans-serif; height:100vh; overflow:hidden; }
+            body { background:var(--bg); color:#fff; font-family:'Cairo',sans-serif; height:100vh; overflow:hidden; }
 
-            /* ===== PLATFORM SCREEN ===== */
-            #platformScreen {
+            /* PLATFORM SCREEN */
+            #ps {
               position:fixed; inset:0;
               display:flex; flex-direction:column;
               align-items:center; justify-content:center;
-              background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d0d 70%);
+              background:radial-gradient(ellipse at center,#1a1a2e 0%,#0d0d0d 70%);
             }
-            .app-title {
-              font-family:'Orbitron',monospace;
-              font-size:2.2rem; font-weight:900;
-              letter-spacing:8px;
+            .logo {
+              font-family:'Orbitron',monospace; font-size:2rem; font-weight:900;
+              letter-spacing:8px; margin-bottom:60px;
               background:linear-gradient(135deg,#6488ff,#a070ff,var(--gold));
               -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-              margin-bottom:60px;
             }
-            .platforms-row {
-              display:flex; gap:60px; align-items:center; justify-content:center;
+            .prow { display:flex; gap:50px; align-items:center; }
+            .pi {
+              display:flex; flex-direction:column; align-items:center; gap:14px;
+              opacity:0.35; transition:all 0.2s; cursor:pointer;
             }
-            .platform-item {
-              display:flex; flex-direction:column; align-items:center; gap:16px;
-              cursor:pointer; transition:all 0.2s;
-              opacity:0.4;
-            }
-            .platform-item.active { opacity:1; }
-            .platform-icon {
-              width:120px; height:120px;
-              border-radius:20px;
+            .pi.sel { opacity:1; }
+            .picon {
+              width:110px; height:110px; border-radius:18px;
+              background:#1a1a1a; border:3px solid transparent;
               display:flex; align-items:center; justify-content:center;
-              font-size:3rem;
-              border:3px solid transparent;
-              background:#1a1a1a;
-              transition:all 0.2s;
+              font-size:2.8rem; transition:all 0.2s;
             }
-            .platform-item.active .platform-icon {
+            .pi.sel .picon {
               border-color:var(--gold);
-              box-shadow:0 0 40px rgba(240,192,64,0.4);
-              background:#222;
-              transform:scale(1.1);
+              box-shadow:0 0 40px rgba(240,192,64,0.5);
+              transform:scale(1.12);
             }
-            .platform-name {
-              font-family:'Orbitron',monospace;
-              font-size:1rem; font-weight:700;
-              letter-spacing:3px;
-              color:var(--dim);
-            }
-            .platform-item.active .platform-name { color:var(--gold); }
-            .platform-count {
-              font-size:0.7rem; color:var(--dim);
-              font-family:'Orbitron',monospace;
-            }
-            .platform-item.active .platform-count { color:#aaa; }
-            .hint-bottom {
-              position:fixed; bottom:20px;
-              font-family:'Orbitron',monospace;
-              font-size:0.65rem; letter-spacing:2px; color:var(--dim);
-            }
+            .pname { font-family:'Orbitron',monospace; font-size:.9rem; letter-spacing:3px; color:var(--dim); }
+            .pi.sel .pname { color:var(--gold); }
+            .pcnt { font-size:.65rem; color:var(--dim); font-family:'Orbitron',monospace; }
+            .pi.sel .pcnt { color:#999; }
 
-            /* ===== GAMES SCREEN ===== */
-            #gamesScreen {
-              position:fixed; inset:0;
-              display:none;
-              flex-direction:row;
-            }
+            /* GAMES SCREEN */
+            #gs { position:fixed; inset:0; display:none; }
 
-            /* Left: game list */
-            .games-list {
-              width:45%;
-              background:var(--left-bg);
+            /* LEFT LIST */
+            .gl {
+              position:absolute; left:0; top:0; bottom:0; width:42%;
+              background:#111;
               display:flex; flex-direction:column;
-              padding:0;
-              overflow:hidden;
-              position:relative;
             }
-            .games-list-header {
-              padding:30px 40px 20px;
-              border-bottom:1px solid #222;
-              flex-shrink:0;
+            .glh {
+              padding:28px 36px 18px; border-bottom:1px solid #222; flex-shrink:0;
             }
-            .games-list-platform {
-              font-family:'Orbitron',monospace;
-              font-size:0.65rem; letter-spacing:4px;
-              color:var(--gold); margin-bottom:6px;
+            .glh-plat { font-family:'Orbitron',monospace; font-size:.6rem; letter-spacing:4px; color:var(--gold); margin-bottom:4px; }
+            .glh-cnt  { font-size:.7rem; color:var(--dim); font-family:'Orbitron',monospace; }
+            .glist { flex:1; overflow-y:auto; overflow-x:hidden; }
+            .glist::-webkit-scrollbar { display:none; }
+            .gi {
+              padding:13px 36px; border-left:4px solid transparent;
+              display:flex; align-items:center; gap:14px;
+              transition:all 0.12s; cursor:pointer;
             }
-            .games-list-count {
-              font-size:0.75rem; color:var(--dim);
-              font-family:'Orbitron',monospace;
-            }
-            .games-list-items {
-              flex:1; overflow:hidden;
-              padding:10px 0;
-              position:relative;
-            }
-            .game-item {
-              padding:14px 40px;
-              cursor:pointer;
-              transition:all 0.15s;
-              border-left:4px solid transparent;
-              display:flex; align-items:center; gap:16px;
-            }
-            .game-item.focused {
-              background:var(--highlight);
-              border-left-color:var(--gold);
-            }
-            .game-item-num {
-              font-family:'Orbitron',monospace;
-              font-size:0.6rem; color:var(--dim);
-              width:24px; flex-shrink:0;
-            }
-            .game-item.focused .game-item-num { color:var(--gold); }
-            .game-item-name {
-              font-size:1.1rem; font-weight:700;
-              color:#aaa;
-              white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-            }
-            .game-item.focused .game-item-name {
-              color:var(--text);
-              font-size:1.25rem;
-            }
+            .gi.sel { background:#1e1e1e; border-left-color:var(--gold); }
+            .gi-num { font-family:'Orbitron',monospace; font-size:.55rem; color:var(--dim); width:22px; flex-shrink:0; }
+            .gi.sel .gi-num { color:var(--gold); }
+            .gi-name { font-size:1rem; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .gi.sel .gi-name { color:#fff; font-size:1.15rem; font-weight:700; }
 
-            /* Right: game art */
-            .game-preview {
-              flex:1;
-              position:relative;
-              overflow:hidden;
+            /* RIGHT PREVIEW */
+            .gp {
+              position:absolute; left:42%; top:0; right:0; bottom:0;
               background:#000;
               display:flex; align-items:center; justify-content:center;
+              overflow:hidden;
             }
-            .preview-bg {
+            .gp-bg {
               position:absolute; inset:0;
               background-size:cover; background-position:center;
-              filter:blur(30px) brightness(0.3);
+              filter:blur(25px) brightness(0.25);
               transition:background-image 0.3s;
             }
-            .preview-img {
+            .gp-img {
               position:relative; z-index:2;
-              max-width:70%; max-height:75%;
-              border-radius:12px;
-              box-shadow:0 20px 60px rgba(0,0,0,0.8);
-              border:2px solid rgba(255,255,255,0.1);
+              max-width:65%; max-height:72%;
+              border-radius:10px;
+              box-shadow:0 16px 50px rgba(0,0,0,0.9);
               object-fit:cover;
-              transition:opacity 0.3s;
             }
-            .preview-no-art {
+            .gp-noart {
               position:relative; z-index:2;
-              display:flex; flex-direction:column; align-items:center; gap:16px;
-              color:var(--dim);
+              display:flex; flex-direction:column; align-items:center; gap:12px; color:var(--dim);
             }
-            .preview-no-art .icon { font-size:5rem; }
-            .preview-no-art .name {
-              font-family:'Orbitron',monospace;
-              font-size:0.7rem; letter-spacing:3px;
-            }
-            .preview-title {
-              position:absolute; bottom:30px; left:0; right:0; z-index:3;
-              text-align:center;
-              font-size:1.1rem; font-weight:700;
-              color:rgba(255,255,255,0.9);
-              text-shadow:0 2px 10px rgba(0,0,0,0.8);
-              padding:0 20px;
+            .gp-noart .ico { font-size:4.5rem; }
+            .gp-noart .lbl { font-family:'Orbitron',monospace; font-size:.65rem; letter-spacing:2px; }
+            .gp-title {
+              position:absolute; bottom:24px; left:0; right:0; z-index:3;
+              text-align:center; font-size:1rem; font-weight:700;
+              color:rgba(255,255,255,0.85);
+              text-shadow:0 2px 8px rgba(0,0,0,0.9);
+              padding:0 16px;
             }
 
-            /* hints */
+            /* HINTS */
             .hints {
-              position:fixed; bottom:0; left:0; right:0;
-              padding:10px 30px;
-              display:flex; gap:24px;
-              font-family:'Orbitron',monospace;
-              font-size:0.6rem; letter-spacing:1px;
-              color:var(--dim);
-              background:linear-gradient(0deg,rgba(0,0,0,0.8),transparent);
-              z-index:100;
+              position:fixed; bottom:0; left:0; right:0; z-index:200;
+              padding:8px 30px; display:flex; gap:20px;
+              font-family:'Orbitron',monospace; font-size:.58rem; letter-spacing:1px; color:var(--dim);
+              background:linear-gradient(0deg,rgba(0,0,0,0.85),transparent);
             }
-            .hk { background:#222; border:1px solid #333; padding:2px 8px; border-radius:4px; margin-left:4px; }
+            .hk { background:#1a1a1a; border:1px solid #333; padding:1px 7px; border-radius:3px; margin-left:3px; }
           </style>
           </head><body>
 
-          <!-- SCREEN 1: Platform Selection -->
-          <div id="platformScreen">
-            <div class="app-title">KHALO AHMED</div>
-            <div class="platforms-row" id="platformsRow"></div>
-            <div class="hint-bottom">X للدخول &nbsp;•&nbsp; START+SELECT للخروج</div>
+          <div id="ps">
+            <div class="logo">KHALO AHMED</div>
+            <div class="prow" id="prow"></div>
           </div>
 
-          <!-- SCREEN 2: Games List -->
-          <div id="gamesScreen">
-            <div class="games-list">
-              <div class="games-list-header">
-                <div class="games-list-platform" id="listPlatform">PS1</div>
-                <div class="games-list-count" id="listCount">0 GAMES</div>
+          <div id="gs">
+            <div class="gl">
+              <div class="glh">
+                <div class="glh-plat" id="glplat"></div>
+                <div class="glh-cnt"  id="glcnt"></div>
               </div>
-              <div class="games-list-items" id="gameItems"></div>
+              <div class="glist" id="glist"></div>
             </div>
-            <div class="game-preview" id="gamePreview">
-              <div class="preview-bg" id="previewBg"></div>
-              <img class="preview-img" id="previewImg" src="" alt="" style="display:none">
-              <div class="preview-no-art" id="previewNoArt">
-                <div class="icon">🎮</div>
-                <div class="name">SELECT A GAME</div>
-              </div>
-              <div class="preview-title" id="previewTitle"></div>
+            <div class="gp">
+              <div class="gp-bg"    id="gpbg"></div>
+              <img class="gp-img"   id="gpimg" src="" style="display:none">
+              <div class="gp-noart" id="gpnoart"><div class="ico">🎮</div><div class="lbl">NO ART</div></div>
+              <div class="gp-title" id="gptitle"></div>
             </div>
           </div>
 
-          <div class="hints" id="hints">
+          <div class="hints">
             <span><span class="hk">◀▶</span> تنقل</span>
-            <span><span class="hk">X</span> دخول</span>
-            <span><span class="hk">○</span> رجوع</span>
+            <span><span class="hk">X / OK</span> دخول</span>
+            <span><span class="hk">○ / BACK</span> رجوع</span>
             <span><span class="hk">START+SELECT</span> خروج</span>
           </div>
 
           <script>
-          const PLATFORMS = {
-            PS1: { name:'PS1', icon:'🎮', path:'/storage/0CF6-106E/ps1', emu:'com.epsxe.ePSXe' },
-            PSP: { name:'PSP', icon:'🕹️', path:'/storage/0CF6-106E/psp', emu:'org.ppsspp.ppsspp' },
-            GBC: { name:'GBC', icon:'👾', path:'/storage/0CF6-106E/gbc', emu:'com.fastemulator.gbcfree' }
-          };
-
-          const DEMO = {
+          var PLATS = [
+            {key:'PS1', icon:'🎮', emu:'com.epsxe.ePSXe',       path:'/storage/0CF6-106E/ps1'},
+            {key:'PSP', icon:'🕹️', emu:'org.ppsspp.ppsspp',      path:'/storage/0CF6-106E/psp'},
+            {key:'GBC', icon:'👾', emu:'com.fastemulator.gbcfree',path:'/storage/0CF6-106E/gbc'}
+          ];
+          var DEMO = {
             PS1:[{name:'Final Fantasy VII',file:'ff7.bin',art:''},{name:'Crash Bandicoot',file:'crash.bin',art:''},{name:'Tekken 3',file:'tekken3.bin',art:''}],
             PSP:[{name:'God of War',file:'gow.iso',art:''},{name:'Monster Hunter',file:'mhf.iso',art:''}],
-            GBC:[{name:'Pokemon Red',file:'pokered.gbc',art:''},{name:'Pokemon Crystal',file:'crystal.gbc',art:''}]
+            GBC:[{name:'Pokemon Red',file:'pokered.gbc',art:''},{name:'Zelda',file:'zelda.gbc',art:''}]
           };
 
-          let allGames = {};
-          let screen = 'platform'; // 'platform' | 'games'
-          let platformIdx = 0;
-          let gameIdx = 0;
-          const platformKeys = Object.keys(PLATFORMS);
+          var games = {};
+          var scr = 'P'; // P=platform, G=games
+          var pi = 0;    // platform index
+          var gi = 0;    // game index
 
-          // ===== INIT =====
           function init() {
-            loadGames();
-            renderPlatforms();
-          }
-
-          function loadGames() {
+            // load games
             try {
               if (window.Android && window.Android.getGamesList) {
-                const raw = JSON.parse(window.Android.getGamesList());
-                platformKeys.forEach(k => allGames[k] = []);
-                raw.forEach(g => { if (allGames[g.platform]) allGames[g.platform].push(g); });
-                // fallback if empty
-                platformKeys.forEach(k => { if (!allGames[k].length) allGames[k] = DEMO[k] || []; });
+                var raw = JSON.parse(window.Android.getGamesList());
+                PLATS.forEach(function(p){ games[p.key]=[]; });
+                raw.forEach(function(g){ if(games[g.platform]) games[g.platform].push(g); });
+                PLATS.forEach(function(p){ if(!games[p.key].length) games[p.key]=DEMO[p.key]||[]; });
               } else {
-                allGames = JSON.parse(JSON.stringify(DEMO));
+                PLATS.forEach(function(p){ games[p.key]=DEMO[p.key]||[]; });
               }
-            } catch(e) { allGames = JSON.parse(JSON.stringify(DEMO)); }
+            } catch(e) {
+              PLATS.forEach(function(p){ games[p.key]=DEMO[p.key]||[]; });
+            }
+            drawPlatforms();
           }
 
-          // ===== PLATFORM SCREEN =====
-          function renderPlatforms() {
-            const row = document.getElementById('platformsRow');
-            row.innerHTML = platformKeys.map((k, i) => {
-              const p = PLATFORMS[k];
-              const count = (allGames[k] || []).length;
-              return `<div class="platform-item ${i===platformIdx?'active':''}" onclick="selectPlatform(${i})">
-                <div class="platform-icon">${p.icon}</div>
-                <div class="platform-name">${p.name}</div>
-                <div class="platform-count">${count} GAMES</div>
-              </div>`;
-            }).join('');
+          function drawPlatforms() {
+            var html = '';
+            PLATS.forEach(function(p, i) {
+              var cnt = (games[p.key]||[]).length;
+              html += '<div class="pi'+(i===pi?' sel':'')+'" onclick="clickPlatform('+i+')">'
+                    + '<div class="picon">'+p.icon+'</div>'
+                    + '<div class="pname">'+p.key+'</div>'
+                    + '<div class="pcnt">'+cnt+' GAMES</div>'
+                    + '</div>';
+            });
+            document.getElementById('prow').innerHTML = html;
           }
 
-          function selectPlatform(idx) {
-            platformIdx = idx;
-            const key = platformKeys[platformIdx];
-            gameIdx = 0;
-            screen = 'games';
-            document.getElementById('platformScreen').style.display = 'none';
-            document.getElementById('gamesScreen').style.display = 'flex';
-            document.getElementById('listPlatform').textContent = key;
-            renderGamesList();
+          function clickPlatform(i) {
+            pi = i; gi = 0;
+            scr = 'G';
+            document.getElementById('ps').style.display = 'none';
+            document.getElementById('gs').style.display = 'block';
+            drawGames();
           }
 
-          // ===== GAMES SCREEN =====
-          function renderGamesList() {
-            const key = platformKeys[platformIdx];
-            const games = allGames[key] || [];
-            document.getElementById('listCount').textContent = games.length + ' GAMES';
+          function drawGames() {
+            var p = PLATS[pi];
+            var list = games[p.key] || [];
+            document.getElementById('glplat').textContent = p.key;
+            document.getElementById('glcnt').textContent  = list.length + ' GAMES';
 
-            const container = document.getElementById('gameItems');
-            container.innerHTML = games.map((g, i) =>
-              `<div class="game-item ${i===gameIdx?'focused':''}" onclick="gameIdx=${i};renderGamesList()">
-                <div class="game-item-num">${String(i+1).padStart(2,'0')}</div>
-                <div class="game-item-name">${g.name}</div>
-              </div>`
-            ).join('');
-
-            // scroll focused into view
-            const focused = container.querySelector('.game-item.focused');
-            if (focused) focused.scrollIntoView({ block:'nearest', behavior:'smooth' });
-
-            updatePreview();
+            var html = '';
+            list.forEach(function(g, i) {
+              html += '<div class="gi'+(i===gi?' sel':'')+'" id="gi'+i+'" onclick="clickGame('+i+')">'
+                    + '<div class="gi-num">'+String(i+1).padStart(2,'0')+'</div>'
+                    + '<div class="gi-name">'+g.name+'</div>'
+                    + '</div>';
+            });
+            document.getElementById('glist').innerHTML = html;
+            scrollToGame();
+            drawPreview();
           }
 
-          function updatePreview() {
-            const key = platformKeys[platformIdx];
-            const games = allGames[key] || [];
-            const game = games[gameIdx];
-            if (!game) return;
+          function scrollToGame() {
+            var el = document.getElementById('gi'+gi);
+            if (el) el.scrollIntoView({block:'nearest', behavior:'smooth'});
+          }
 
-            const img = document.getElementById('previewImg');
-            const noArt = document.getElementById('previewNoArt');
-            const bg = document.getElementById('previewBg');
-            const title = document.getElementById('previewTitle');
+          function drawPreview() {
+            var p    = PLATS[pi];
+            var list = games[p.key] || [];
+            var g    = list[gi];
+            if (!g) return;
 
-            title.textContent = game.name;
+            document.getElementById('gptitle').textContent = g.name;
 
-            if (game.art) {
-              const src = 'file://' + game.art;
-              img.onload = function() { img.style.display='block'; noArt.style.display='none'; };
-              img.onerror = function() { img.style.display='none'; noArt.style.display='flex'; };
+            var img    = document.getElementById('gpimg');
+            var noart  = document.getElementById('gpnoart');
+            var bg     = document.getElementById('gpbg');
+
+            if (g.art) {
+              var src = 'file://' + g.art;
+              img.onload  = function(){ img.style.display='block'; noart.style.display='none'; };
+              img.onerror = function(){ img.style.display='none';  noart.style.display='flex'; };
               img.src = src;
-              bg.style.backgroundImage = 'url(' + src + ')';
+              bg.style.backgroundImage = 'url("' + src + '")';
             } else {
-              img.style.display = 'none';
-              noArt.style.display = 'flex';
+              img.style.display   = 'none';
+              noart.style.display = 'flex';
               bg.style.backgroundImage = 'none';
-              const p = PLATFORMS[key];
-              noArt.innerHTML = '<div class="icon">'+p.icon+'</div><div class="name">NO ART</div>';
+              noart.innerHTML = '<div class="ico">'+p.icon+'</div><div class="lbl">NO ART</div>';
             }
           }
 
-          function launchCurrentGame() {
-            const key = platformKeys[platformIdx];
-            const games = allGames[key] || [];
-            const game = games[gameIdx];
-            if (!game || !game.file) return;
-            const p = PLATFORMS[key];
-            if (window.Android) window.Android.launchGame(p.emu, p.path + '/' + game.file);
+          function clickGame(i) {
+            gi = i;
+            drawGames();
           }
 
-          // ===== KEY HANDLER (called from Java) =====
-          function handleKey(key) {
-            if (screen === 'platform') {
-              if (key === 'ArrowLeft')  { platformIdx = Math.max(0, platformIdx-1); renderPlatforms(); }
-              if (key === 'ArrowRight') { platformIdx = Math.min(platformKeys.length-1, platformIdx+1); renderPlatforms(); }
-              if (key === 'Enter')      { selectPlatform(platformIdx); }
-            } else if (screen === 'games') {
-              const key2 = platformKeys[platformIdx];
-              const count = (allGames[key2] || []).length;
-              if (key === 'ArrowUp')   { gameIdx = Math.max(0, gameIdx-1); renderGamesList(); }
-              if (key === 'ArrowDown') { gameIdx = Math.min(count-1, gameIdx+1); renderGamesList(); }
-              if (key === 'Enter')     { launchCurrentGame(); }
-              if (key === 'Escape')    { screen='platform'; document.getElementById('gamesScreen').style.display='none'; document.getElementById('platformScreen').style.display='flex'; renderPlatforms(); }
-            }
+          function launchGame() {
+            var p    = PLATS[pi];
+            var list = games[p.key] || [];
+            var g    = list[gi];
+            if (!g || !g.file) return;
+            if (window.Android) window.Android.launchGame(p.emu, p.path + '/' + g.file);
           }
+
+          // Called from Java
+          window.handleKey = function(key) {
+            if (scr === 'P') {
+              if (key === 'LEFT')  { pi = Math.max(0, pi-1); drawPlatforms(); }
+              if (key === 'RIGHT') { pi = Math.min(PLATS.length-1, pi+1); drawPlatforms(); }
+              if (key === 'OK')    { clickPlatform(pi); }
+            } else {
+              var list = games[PLATS[pi].key] || [];
+              if (key === 'UP')   { gi = Math.max(0, gi-1); drawGames(); }
+              if (key === 'DOWN') { gi = Math.min(list.length-1, gi+1); drawGames(); }
+              if (key === 'OK')   { launchGame(); }
+              if (key === 'BACK') {
+                scr = 'P';
+                document.getElementById('gs').style.display = 'none';
+                document.getElementById('ps').style.display = 'flex';
+                drawPlatforms();
+              }
+            }
+          };
 
           init();
           </script>
