@@ -98,6 +98,7 @@ jobs:
                   <package android:name="org.ppsspp.ppsspp"/>
                   <package android:name="com.fastemulator.gbc"/>
                   <package android:name="com.johnemulators.johngbc"/>
+                  <package android:name="com.johnemulators.johngbclite"/>
                   <intent>
                       <action android:name="android.intent.action.VIEW"/>
                       <data android:mimeType="*/*"/>
@@ -366,21 +367,21 @@ jobs:
                   android:layout_width="match_parent" android:layout_height="wrap_content"
                   android:orientation="vertical" android:gravity="center"
                   android:background="@drawable/bg_header"
-                  android:paddingTop="12dp" android:paddingBottom="8dp">
+                  android:paddingTop="16dp" android:paddingBottom="12dp">
                   <TextView
                       android:layout_width="wrap_content" android:layout_height="wrap_content"
                       android:text="KHALO AHMED"
                       android:textColor="@color/neon"
-                      android:textSize="24sp" android:textStyle="bold"
-                      android:letterSpacing="0.30" android:fontFamily="sans-serif-condensed"/>
+                      android:textSize="34sp" android:textStyle="bold"
+                      android:letterSpacing="0.35" android:fontFamily="sans-serif-condensed"/>
                   <TextView
                       android:layout_width="wrap_content" android:layout_height="wrap_content"
                       android:text="Gharam &amp; Omar"
                       android:textColor="@color/text_mid"
-                      android:textSize="11sp" android:letterSpacing="0.10"
-                      android:fontFamily="sans-serif-light" android:layout_marginTop="2dp"/>
-                  <View android:layout_width="70dp" android:layout_height="1dp"
-                      android:layout_marginTop="5dp" android:background="@color/accent"/>
+                      android:textSize="15sp" android:textStyle="bold" android:letterSpacing="0.15"
+                      android:fontFamily="sans-serif-light" android:layout_marginTop="3dp"/>
+                  <View android:layout_width="90dp" android:layout_height="2dp"
+                      android:layout_marginTop="7dp" android:background="@color/accent"/>
               </LinearLayout>
 
               <LinearLayout
@@ -610,7 +611,7 @@ jobs:
               public static final String[][] PLATFORMS = {
                   {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",         ".bin,.iso,.img,.pbp,.cue", "🎮", "/storage/0CF6-106E/backgrounds/ps1.jpg"},
                   {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",        ".iso,.cso,.pbp",           "🕹️", "/storage/0CF6-106E/backgrounds/psp.jpg"},
-                  {"GBC", "/storage/0CF6-106E/gbc", "com.johnemulators.johngbc", ".gbc,.gb,.zip",            "👾", "/storage/0CF6-106E/backgrounds/gbc.jpg"},
+                  {"GBC", "/storage/0CF6-106E/gbc", "com.johnemulators.johngbclite", ".gbc,.gb,.zip",            "👾", "/storage/0CF6-106E/backgrounds/gbc.jpg"},
               };
               public static final String[] IMAGE_EXTS = {".png",".jpg",".jpeg",".webp"};
               public static final String   PREFS_NAME  = "khalo_prefs";
@@ -910,7 +911,7 @@ jobs:
                   count.setTextSize(sel?10:8);
                   count.setTextColor(sel?0xff4db8ff:0xff2a4a6a);
                   count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,2,0,8); card.addView(count);
-                  // Thumbnail من الـ background folder
+                  // Thumbnail يملا عرض الكارت بالكامل مع centerCrop ذكي
                   String bgPath = p.length>5 ? p[5] : "";
                   if(!bgPath.isEmpty()){
                       java.io.File bgFile=new java.io.File(bgPath);
@@ -919,15 +920,19 @@ jobs:
                           if(bmp!=null){
                               ImageView thumb=new ImageView(this);
                               thumb.setImageBitmap(bmp);
-                              int tw=sel?dp(160):dp(120); int th=sel?dp(80):dp(60);
-                              LinearLayout.LayoutParams tlp2=new LinearLayout.LayoutParams(tw,th);
-                              tlp2.gravity=Gravity.CENTER_HORIZONTAL;
+                              // يملا العرض الكامل للكارت مع ارتفاع نسبي ذكي
+                              LinearLayout.LayoutParams tlp2=new LinearLayout.LayoutParams(
+                                  LinearLayout.LayoutParams.MATCH_PARENT, sel?dp(90):dp(68));
+                              tlp2.setMargins(0,4,0,0);
                               thumb.setLayoutParams(tlp2);
                               thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                              GradientDrawable tgd=new GradientDrawable(); tgd.setCornerRadius(dp(8));
+                              // border ناعم
+                              GradientDrawable tgd=new GradientDrawable();
+                              tgd.setCornerRadius(dp(6));
                               tgd.setStroke(sel?2:1,sel?0xff4db8ff:0xff1a3060);
-                              thumb.setBackground(tgd); thumb.setClipToOutline(true);
-                              thumb.setAlpha(sel?1f:0.7f);
+                              thumb.setBackground(tgd);
+                              thumb.setClipToOutline(true);
+                              thumb.setAlpha(sel?1f:0.72f);
                               card.addView(thumb);
                           }
                       }
@@ -983,9 +988,8 @@ jobs:
                   for(int i=0;i<Config.PLATFORMS.length;i++) if(Config.PLATFORMS[i][0].equals(e.platform)){Intent intent=new Intent(this,GamesActivity.class);intent.putExtra("platformIdx",i);intent.putExtra("jumpToFile",e.file);startActivity(intent);overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_left);return;}
               }
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=true;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=true;
-                  if(r1&&r2){if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finish());exitDialog.show();}return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1){r1=true; checkR1R2(); return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2){r2=true; checkR1R2(); return true;}
                   switch(keyCode){
                       case KeyEvent.KEYCODE_DPAD_LEFT: if(selectedIdx>0){selectedIdx--;drawPlatforms(true);} return true;
                       case KeyEvent.KEYCODE_DPAD_RIGHT: if(selectedIdx<totalCards-1){selectedIdx++;drawPlatforms(true);} return true;
@@ -994,6 +998,14 @@ jobs:
                       case KeyEvent.KEYCODE_BACK: case KeyEvent.KEYCODE_BUTTON_B: finish(); return true;
                   }
                   return super.onKeyDown(keyCode,event);
+              }
+              private void checkR1R2(){
+                  if(r1&&r2){
+                      if(exitDialog==null||!exitDialog.isShowing()){
+                          exitDialog=new ExitDialog(this,()->finish());
+                          exitDialog.show();
+                      }
+                  }
               }
               @Override public boolean onKeyUp(int keyCode,KeyEvent event){
                   if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=false;
@@ -1111,10 +1123,9 @@ jobs:
               }
 
               private void launchMyOldBoy(File rom){
-                  // John GBC - بيقبل file path مباشرة
                   try{
                       Intent i=new Intent(Intent.ACTION_VIEW);
-                      i.setComponent(new ComponentName("com.johnemulators.johngbc","com.johnemulators.johngbc.MainActivity"));
+                      i.setComponent(new ComponentName("com.johnemulators.johngbclite","com.johnemulators.johngbclite.MainActivity"));
                       i.setDataAndType(android.net.Uri.parse("file://"+rom.getAbsolutePath()),"application/x-gbc-rom");
                       i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                       startActivity(i);
@@ -1130,9 +1141,8 @@ jobs:
               private void refreshList(){((GameAdapter)listView.getAdapter()).notifyDataSetChanged();listView.setSelection(selectedGame);}
 
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=true;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=true;
-                  if(r1&&r2){stopScroll();if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finishAffinity());exitDialog.show();}return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1){r1=true; checkR1R2(); return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2){r2=true; checkR1R2(); return true;}
                   switch(keyCode){
                       case KeyEvent.KEYCODE_DPAD_UP:   if(event.getRepeatCount()==0) startScrollLoop(-1); return true;
                       case KeyEvent.KEYCODE_DPAD_DOWN: if(event.getRepeatCount()==0) startScrollLoop(1);  return true;
@@ -1142,6 +1152,15 @@ jobs:
                           finish(); overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_right); return true;
                   }
                   return super.onKeyDown(keyCode,event);
+              }
+              private void checkR1R2(){
+                  if(r1&&r2){
+                      stopScroll();
+                      if(exitDialog==null||!exitDialog.isShowing()){
+                          exitDialog=new ExitDialog(this,()->finishAffinity());
+                          exitDialog.show();
+                      }
+                  }
               }
               @Override public boolean onKeyUp(int keyCode,KeyEvent event){
                   if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=false;
@@ -1266,7 +1285,7 @@ jobs:
               private void launchMyOldBoy(File rom){
                   try{
                       Intent i=new Intent(Intent.ACTION_VIEW);
-                      i.setComponent(new ComponentName("com.johnemulators.johngbc","com.johnemulators.johngbc.MainActivity"));
+                      i.setComponent(new ComponentName("com.johnemulators.johngbclite","com.johnemulators.johngbclite.MainActivity"));
                       i.setDataAndType(android.net.Uri.parse("file://"+rom.getAbsolutePath()),"application/x-gbc-rom");
                       i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                       startActivity(i);
@@ -1278,9 +1297,8 @@ jobs:
               }
 
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=true;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=true;
-                  if(r1&&r2){stopScroll();if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finishAffinity());exitDialog.show();}return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1){r1=true; checkR1R2(); return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2){r2=true; checkR1R2(); return true;}
                   switch(keyCode){
                       case KeyEvent.KEYCODE_DPAD_UP:   if(event.getRepeatCount()==0) startScrollLoop(-1); return true;
                       case KeyEvent.KEYCODE_DPAD_DOWN: if(event.getRepeatCount()==0) startScrollLoop(1);  return true;
@@ -1290,6 +1308,15 @@ jobs:
                           finish(); overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_right); return true;
                   }
                   return super.onKeyDown(keyCode,event);
+              }
+              private void checkR1R2(){
+                  if(r1&&r2){
+                      stopScroll();
+                      if(exitDialog==null||!exitDialog.isShowing()){
+                          exitDialog=new ExitDialog(this,()->finishAffinity());
+                          exitDialog.show();
+                      }
+                  }
               }
               @Override public boolean onKeyUp(int keyCode,KeyEvent event){
                   if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=false;
