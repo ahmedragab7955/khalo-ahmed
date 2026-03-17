@@ -40,7 +40,7 @@ jobs:
 
           cat > build.gradle << 'EOF'
           plugins {
-              id 'com.android.application' version '7.4.2' apply false
+              id 'com.android.application' version '8.2.2' apply false
           }
           EOF
 
@@ -238,7 +238,7 @@ jobs:
 
       - name: Setup Gradle Wrapper
         run: |
-          gradle wrapper --gradle-version 7.5 --distribution-type bin
+          gradle wrapper --gradle-version 8.6 --distribution-type bin
           chmod +x gradlew
 
       - name: Build Release APK
