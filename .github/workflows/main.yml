@@ -60,8 +60,8 @@ jobs:
                   applicationId "com.khaloahmed.launcher"
                   minSdk 21
                   targetSdk 34
-                  versionCode 6
-                  versionName "6.0"
+                  versionCode 7
+                  versionName "7.0"
               }
               buildTypes {
                   release {
@@ -89,6 +89,7 @@ jobs:
 
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
               <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage"/>
+              <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
               <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
               <uses-feature android:name="android.software.leanback" android:required="false"/>
 
@@ -127,11 +128,13 @@ jobs:
                   <activity android:name=".RecentActivity"
                       android:configChanges="orientation|keyboardHidden|screenSize"
                       android:screenOrientation="landscape"/>
+
+                  <service android:name=".OverlayService" android:exported="false"/>
+
               </application>
           </manifest>
           EOF
 
-          # ── الخلفية الرئيسية: فاتحة navy/slate ──
           cat > app/src/main/res/drawable/bg_gradient.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
@@ -156,6 +159,86 @@ jobs:
               <gradient android:type="linear" android:angle="0"
                   android:startColor="#0f1f3d" android:endColor="#1a3060"/>
           </shape>
+          EOF
+
+          cat > app/src/main/res/drawable/console_ps1.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:top="30dp" android:bottom="10dp" android:left="8dp" android:right="8dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#1a1a2e"/>
+                      <corners android:radius="12dp"/>
+                  </shape>
+              </item>
+              <item android:top="18dp" android:bottom="50dp" android:left="20dp" android:right="20dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#16213e"/>
+                      <corners android:radius="6dp"/>
+                  </shape>
+              </item>
+              <item android:top="35dp" android:bottom="20dp" android:left="35dp" android:right="35dp">
+                  <shape android:shape="oval">
+                      <solid android:color="#0f3460"/>
+                      <stroke android:width="2dp" android:color="#4db8ff"/>
+                  </shape>
+              </item>
+              <item android:top="52dp" android:bottom="37dp" android:left="52dp" android:right="52dp">
+                  <shape android:shape="oval">
+                      <solid android:color="#1a2a4a"/>
+                  </shape>
+              </item>
+          </layer-list>
+          EOF
+
+          cat > app/src/main/res/drawable/console_psp.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:top="15dp" android:bottom="15dp" android:left="4dp" android:right="4dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#1a1a2e"/>
+                      <corners android:radius="18dp"/>
+                  </shape>
+              </item>
+              <item android:top="22dp" android:bottom="22dp" android:left="22dp" android:right="22dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#0a1628"/>
+                      <corners android:radius="4dp"/>
+                      <stroke android:width="1dp" android:color="#4db8ff"/>
+                  </shape>
+              </item>
+              <item android:top="58dp" android:bottom="8dp" android:left="52dp" android:right="52dp">
+                  <shape android:shape="oval">
+                      <solid android:color="#0f3460"/>
+                      <stroke android:width="1dp" android:color="#4db8ff"/>
+                  </shape>
+              </item>
+          </layer-list>
+          EOF
+
+          cat > app/src/main/res/drawable/console_gbc.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:top="4dp" android:bottom="4dp" android:left="14dp" android:right="14dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#2a1a3e"/>
+                      <corners android:topLeftRadius="10dp" android:topRightRadius="10dp"
+                          android:bottomLeftRadius="20dp" android:bottomRightRadius="20dp"/>
+                  </shape>
+              </item>
+              <item android:top="12dp" android:bottom="42dp" android:left="24dp" android:right="24dp">
+                  <shape android:shape="rectangle">
+                      <solid android:color="#0a1628"/>
+                      <corners android:radius="3dp"/>
+                      <stroke android:width="1dp" android:color="#9966ff"/>
+                  </shape>
+              </item>
+              <item android:top="55dp" android:bottom="10dp" android:left="38dp" android:right="38dp">
+                  <shape android:shape="oval">
+                      <solid android:color="#3a0a5e"/>
+                      <stroke android:width="1dp" android:color="#9966ff"/>
+                  </shape>
+              </item>
+          </layer-list>
           EOF
 
           cat > app/src/main/res/values/colors.xml << 'EOF'
@@ -231,57 +314,77 @@ jobs:
           </set>
           EOF
 
-          # ── PlatformActivity layout: المربعات بطول الشاشة كاملاً ──
+          # ── activity_platform: header + مربعات بطول الشاشة ──
           cat > app/src/main/res/layout/activity_platform.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent" android:layout_height="match_parent"
               android:background="@drawable/bg_gradient"
-              android:orientation="horizontal">
+              android:orientation="vertical">
 
-              <!-- المربعات تمتد بطول الشاشة كاملاً -->
-              <LinearLayout android:id="@+id/platformRow"
-                  android:layout_width="0dp" android:layout_height="match_parent"
-                  android:layout_weight="1"
-                  android:orientation="horizontal"
-                  android:gravity="center_vertical"/>
-
-              <!-- شريط Recently Played على اليمين -->
               <LinearLayout
-                  android:layout_width="wrap_content" android:layout_height="match_parent"
-                  android:orientation="vertical"
-                  android:gravity="bottom"
-                  android:paddingBottom="18dp" android:paddingEnd="16dp">
-
-                  <LinearLayout android:id="@+id/recentStrip"
+                  android:layout_width="match_parent" android:layout_height="wrap_content"
+                  android:orientation="vertical" android:gravity="center"
+                  android:background="@drawable/bg_header"
+                  android:paddingTop="12dp" android:paddingBottom="8dp">
+                  <TextView
                       android:layout_width="wrap_content" android:layout_height="wrap_content"
-                      android:orientation="vertical"
-                      android:visibility="gone">
-                      <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                          android:orientation="horizontal" android:gravity="center_vertical"
-                          android:paddingBottom="7dp">
-                          <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                              android:layout_weight="1" android:text="RECENTLY PLAYED"
-                              android:textColor="@color/recent_color" android:textSize="10sp"
-                              android:textStyle="bold" android:letterSpacing="0.2" android:fontFamily="monospace"/>
-                          <TextView android:id="@+id/clearRecentBtn"
-                              android:layout_width="wrap_content" android:layout_height="wrap_content"
-                              android:text="CLEAR" android:textColor="@color/text_dim"
-                              android:textSize="9sp" android:fontFamily="monospace" android:padding="4dp"/>
-                      </LinearLayout>
-                      <LinearLayout android:id="@+id/recentGamesList"
-                          android:layout_width="wrap_content" android:layout_height="wrap_content"
-                          android:orientation="vertical" android:gravity="end"/>
-                  </LinearLayout>
-
-                  <TextView android:id="@+id/hintText"
+                      android:text="KHALO AHMED"
+                      android:textColor="@color/neon"
+                      android:textSize="24sp" android:textStyle="bold"
+                      android:letterSpacing="0.30" android:fontFamily="sans-serif-condensed"/>
+                  <TextView
                       android:layout_width="wrap_content" android:layout_height="wrap_content"
-                      android:layout_marginTop="12dp"
-                      android:text="   تنقل      OK  دخول      R1+R2  خروج"
-                      android:textColor="@color/text_dim" android:textSize="10sp"
-                      android:fontFamily="sans-serif-light"/>
+                      android:text="Gharam &amp; Omar"
+                      android:textColor="@color/text_mid"
+                      android:textSize="11sp" android:letterSpacing="0.10"
+                      android:fontFamily="sans-serif-light" android:layout_marginTop="2dp"/>
+                  <View android:layout_width="70dp" android:layout_height="1dp"
+                      android:layout_marginTop="5dp" android:background="@color/accent"/>
               </LinearLayout>
 
+              <LinearLayout
+                  android:layout_width="match_parent" android:layout_height="0dp"
+                  android:layout_weight="1" android:orientation="horizontal">
+
+                  <LinearLayout android:id="@+id/platformRow"
+                      android:layout_width="0dp" android:layout_height="match_parent"
+                      android:layout_weight="1" android:orientation="horizontal"/>
+
+                  <LinearLayout
+                      android:layout_width="wrap_content" android:layout_height="match_parent"
+                      android:orientation="vertical" android:gravity="bottom"
+                      android:paddingBottom="14dp" android:paddingEnd="14dp">
+
+                      <LinearLayout android:id="@+id/recentStrip"
+                          android:layout_width="wrap_content" android:layout_height="wrap_content"
+                          android:orientation="vertical" android:visibility="gone">
+                          <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                              android:orientation="horizontal" android:gravity="center_vertical"
+                              android:paddingBottom="7dp">
+                              <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                                  android:layout_weight="1" android:text="RECENTLY PLAYED"
+                                  android:textColor="@color/recent_color" android:textSize="10sp"
+                                  android:textStyle="bold" android:letterSpacing="0.2" android:fontFamily="monospace"/>
+                              <TextView android:id="@+id/clearRecentBtn"
+                                  android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                  android:text="CLEAR" android:textColor="@color/text_dim"
+                                  android:textSize="9sp" android:fontFamily="monospace" android:padding="4dp"/>
+                          </LinearLayout>
+                          <LinearLayout android:id="@+id/recentGamesList"
+                              android:layout_width="wrap_content" android:layout_height="wrap_content"
+                              android:orientation="vertical" android:gravity="end"/>
+                      </LinearLayout>
+
+                      <TextView android:id="@+id/hintText"
+                          android:layout_width="wrap_content" android:layout_height="wrap_content"
+                          android:layout_marginTop="10dp"
+                          android:text="   تنقل      OK  دخول      R1+R2  خروج"
+                          android:textColor="@color/text_dim" android:textSize="10sp"
+                          android:fontFamily="sans-serif-light"/>
+                  </LinearLayout>
+
+              </LinearLayout>
           </LinearLayout>
           EOF
 
@@ -290,11 +393,9 @@ jobs:
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent" android:layout_height="match_parent"
               android:background="@drawable/bg_gradient" android:orientation="horizontal">
-
               <LinearLayout android:layout_width="0dp" android:layout_height="match_parent"
                   android:layout_weight="38" android:background="@drawable/bg_left_panel"
                   android:orientation="vertical">
-
                   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                       android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="18dp"
                       android:paddingTop="14dp" android:paddingBottom="10dp"
@@ -308,18 +409,13 @@ jobs:
                           android:textColor="@color/text_mid" android:textSize="11sp"
                           android:layout_marginTop="2dp" android:fontFamily="monospace"/>
                   </LinearLayout>
-
                   <View android:layout_width="match_parent" android:layout_height="1dp"
                       android:background="@color/accent"/>
-
-                  <!-- السهم داخل الـ ListView نفسه كـ item مش fixed -->
                   <ListView android:id="@+id/gameList"
                       android:layout_width="match_parent" android:layout_height="0dp"
-                      android:layout_weight="1"
-                      android:divider="@color/divider" android:dividerHeight="1dp"
+                      android:layout_weight="1" android:divider="@color/divider" android:dividerHeight="1dp"
                       android:scrollbars="none" android:focusable="false" android:overScrollMode="never"/>
               </LinearLayout>
-
               <FrameLayout android:layout_width="0dp" android:layout_height="match_parent"
                   android:layout_weight="62" android:background="#000000">
                   <ImageView android:id="@+id/previewBg"
@@ -356,11 +452,9 @@ jobs:
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent" android:layout_height="match_parent"
               android:background="@drawable/bg_gradient" android:orientation="horizontal">
-
               <LinearLayout android:layout_width="0dp" android:layout_height="match_parent"
                   android:layout_weight="38" android:background="@drawable/bg_left_panel"
                   android:orientation="vertical">
-
                   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                       android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="18dp"
                       android:paddingTop="14dp" android:paddingBottom="10dp"
@@ -374,17 +468,13 @@ jobs:
                           android:textColor="@color/text_mid" android:textSize="11sp"
                           android:layout_marginTop="2dp" android:fontFamily="monospace"/>
                   </LinearLayout>
-
                   <View android:layout_width="match_parent" android:layout_height="1dp"
                       android:background="@color/recent_color"/>
-
                   <ListView android:id="@+id/recentList"
                       android:layout_width="match_parent" android:layout_height="0dp"
-                      android:layout_weight="1"
-                      android:divider="@color/divider" android:dividerHeight="1dp"
+                      android:layout_weight="1" android:divider="@color/divider" android:dividerHeight="1dp"
                       android:scrollbars="none" android:focusable="false" android:overScrollMode="never"/>
               </LinearLayout>
-
               <FrameLayout android:layout_width="0dp" android:layout_height="match_parent"
                   android:layout_weight="62" android:background="#000000">
                   <ImageView android:id="@+id/recentPreviewBg"
@@ -416,7 +506,6 @@ jobs:
           </LinearLayout>
           EOF
 
-          # ── item_game: السهم جزء من الـ item نفسه ──
           cat > app/src/main/res/layout/item_game.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -434,13 +523,11 @@ jobs:
                   android:layout_centerVertical="true" android:layout_toEndOf="@id/gameNum"
                   android:layout_marginEnd="28dp" android:textSize="14sp"
                   android:ellipsize="end" android:singleLine="true" android:fontFamily="sans-serif"/>
-              <!-- السهم جزء من الـ item: يظهر فقط لما يكون selected -->
               <TextView android:id="@+id/arrowIndicator"
                   android:layout_width="wrap_content" android:layout_height="wrap_content"
                   android:layout_alignParentEnd="true" android:layout_centerVertical="true"
                   android:text="&#9664;" android:textColor="@color/accent"
-                  android:textSize="14sp" android:paddingEnd="8dp"
-                  android:visibility="gone"/>
+                  android:textSize="14sp" android:paddingEnd="8dp" android:visibility="gone"/>
           </RelativeLayout>
           EOF
 
@@ -467,13 +554,11 @@ jobs:
                       android:layout_width="match_parent" android:layout_height="wrap_content"
                       android:textSize="10sp" android:fontFamily="monospace" android:layout_marginTop="2dp"/>
               </LinearLayout>
-              <!-- السهم جزء من الـ item: يظهر فقط لما يكون selected -->
               <TextView android:id="@+id/arrowIndicator"
                   android:layout_width="wrap_content" android:layout_height="wrap_content"
                   android:layout_alignParentEnd="true" android:layout_centerVertical="true"
                   android:text="&#9664;" android:textColor="@color/recent_color"
-                  android:textSize="14sp" android:paddingEnd="8dp"
-                  android:visibility="gone"/>
+                  android:textSize="14sp" android:paddingEnd="8dp" android:visibility="gone"/>
           </RelativeLayout>
           EOF
 
@@ -488,9 +573,9 @@ jobs:
                   {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbc",  ".gbc,.gb,.zip",            "👾"},
               };
               public static final String[] IMAGE_EXTS = {".png",".jpg",".jpeg",".webp"};
-              public static final String   PREFS_NAME = "khalo_prefs";
-              public static final String   KEY_RECENT = "recent_games";
-              public static final int      MAX_RECENT = 20;
+              public static final String   PREFS_NAME  = "khalo_prefs";
+              public static final String   KEY_RECENT  = "recent_games";
+              public static final int      MAX_RECENT  = 20;
           }
           EOF
 
@@ -583,31 +668,23 @@ jobs:
           import android.graphics.Typeface; import android.graphics.drawable.GradientDrawable;
           import android.view.Gravity; import android.view.KeyEvent;
           import android.widget.LinearLayout; import android.widget.TextView;
-
           public class ExitDialog {
               public interface ExitCallback { void onExit(); }
               private AlertDialog dialog; private int selected=0;
               private TextView btnContinue,btnExit;
               private final Activity activity; private final ExitCallback callback;
-
               public ExitDialog(Activity activity,ExitCallback callback){this.activity=activity;this.callback=callback;}
-
               public void show(){
                   LinearLayout root=new LinearLayout(activity);
                   root.setOrientation(LinearLayout.VERTICAL); root.setGravity(Gravity.CENTER); root.setPadding(52,44,52,36);
                   GradientDrawable bg=new GradientDrawable();
                   bg.setColors(new int[]{0xff0f1f3d,0xff162440});
-                  bg.setGradientType(GradientDrawable.LINEAR_GRADIENT);
-                  bg.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
                   bg.setCornerRadius(30f); bg.setStroke(2,0xff4db8ff); root.setBackground(bg);
-
                   TextView title=new TextView(activity); title.setText("خروج من التطبيق؟");
                   title.setTextColor(0xffffffff); title.setTextSize(17f); title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setGravity(Gravity.CENTER); title.setPadding(0,0,0,6); root.addView(title);
-
                   TextView sub=new TextView(activity); sub.setText("سيتم إغلاق التطبيق بالكامل");
                   sub.setTextColor(0xff6a8ab0); sub.setTextSize(11f); sub.setGravity(Gravity.CENTER); sub.setPadding(0,0,0,30); root.addView(sub);
-
                   LinearLayout btnRow=new LinearLayout(activity); btnRow.setOrientation(LinearLayout.HORIZONTAL); btnRow.setGravity(Gravity.CENTER);
                   btnContinue=makeBtn("متابعة"); btnExit=makeBtn("خروج");
                   LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -616,7 +693,6 @@ jobs:
                   highlightSelected();
                   btnContinue.setOnClickListener(v->{selected=0;confirm();});
                   btnExit.setOnClickListener(v->{selected=1;confirm();});
-
                   AlertDialog.Builder builder=new AlertDialog.Builder(activity,android.R.style.Theme_Material_Dialog_Alert);
                   builder.setView(root); builder.setCancelable(true); dialog=builder.create();
                   if(dialog.getWindow()!=null) dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -627,13 +703,11 @@ jobs:
                           case KeyEvent.KEYCODE_DPAD_RIGHT: selected=1; highlightSelected(); return true;
                           case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER: confirm(); return true;
                           case KeyEvent.KEYCODE_BACK: case KeyEvent.KEYCODE_BUTTON_B: dialog.dismiss(); return true;
-                          case KeyEvent.KEYCODE_BUTTON_R1: case KeyEvent.KEYCODE_BUTTON_R2: dialog.dismiss(); callback.onExit(); return true;
                       }
                       return false;
                   });
                   dialog.show();
               }
-
               private TextView makeBtn(String label){
                   TextView tv=new TextView(activity); tv.setText(label); tv.setTextSize(14f);
                   tv.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); tv.setPadding(36,20,36,20); tv.setGravity(Gravity.CENTER); return tv;
@@ -650,20 +724,202 @@ jobs:
           }
           EOF
 
+          # ── OverlayService: نقطة صغيرة تحت شمال + L1+L2 يطلع قايمة ──
+          cat > app/src/main/java/com/khaloahmed/launcher/OverlayService.java << 'EOF'
+          package com.khaloahmed.launcher;
+          import android.app.Service;
+          import android.content.Intent;
+          import android.graphics.PixelFormat;
+          import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
+          import android.os.IBinder;
+          import android.view.Gravity;
+          import android.view.KeyEvent;
+          import android.view.View;
+          import android.view.WindowManager;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+
+          public class OverlayService extends Service {
+              private WindowManager wm;
+              private View dotView;
+              private View menuView;
+              private boolean menuShown=false;
+              private boolean l1=false,l2=false;
+
+              @Override public void onCreate(){
+                  super.onCreate();
+                  wm=(WindowManager)getSystemService(WINDOW_SERVICE);
+                  createDot();
+              }
+
+              private int dp(int v){return(int)(v*getResources().getDisplayMetrics().density);}
+
+              private void createDot(){
+                  // نقطة صغيرة شفافة جداً تحت شمال - مش باينة تقريباً
+                  TextView dot=new TextView(this);
+                  dot.setText("·");
+                  dot.setTextSize(10f);
+                  dot.setTextColor(0x22ffffff);
+
+                  // بتستقبل key events عشان تشوف L1+L2
+                  dot.setFocusable(true);
+                  dot.setFocusableInTouchMode(true);
+
+                  WindowManager.LayoutParams p=new WindowManager.LayoutParams(
+                      dp(14),dp(14),
+                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                      WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                          |WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                      PixelFormat.TRANSLUCENT
+                  );
+                  p.gravity=Gravity.BOTTOM|Gravity.START;
+                  p.x=dp(6); p.y=dp(6);
+
+                  dot.setOnKeyListener((v,keyCode,event)->{
+                      if(event.getAction()==KeyEvent.ACTION_DOWN){
+                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L1) l1=true;
+                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L2) l2=true;
+                          if(l1&&l2&&!menuShown) showMenu();
+                      } else if(event.getAction()==KeyEvent.ACTION_UP){
+                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L1) l1=false;
+                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L2) l2=false;
+                      }
+                      return false;
+                  });
+
+                  dotView=dot;
+                  wm.addView(dotView,p);
+              }
+
+              @Override public int onStartCommand(Intent intent,int flags,int startId){
+                  if(intent!=null&&"SHOW_MENU".equals(intent.getAction())) showMenu();
+                  else if(intent!=null&&"STOP".equals(intent.getAction())) stopSelf();
+                  return START_STICKY;
+              }
+
+              private void showMenu(){
+                  if(menuShown) return;
+                  menuShown=true;
+
+                  LinearLayout menu=new LinearLayout(this);
+                  menu.setOrientation(LinearLayout.VERTICAL);
+                  menu.setGravity(Gravity.CENTER);
+                  menu.setPadding(dp(28),dp(22),dp(28),dp(22));
+                  menu.setFocusableInTouchMode(true);
+                  menu.setFocusable(true);
+
+                  GradientDrawable bg=new GradientDrawable();
+                  bg.setColors(new int[]{0xf20f1f3d,0xf2162440});
+                  bg.setCornerRadius(dp(16));
+                  bg.setStroke(dp(2),0xff4db8ff);
+                  menu.setBackground(bg);
+
+                  TextView title=new TextView(this);
+                  title.setText("إيقاف اللعبة؟");
+                  title.setTextColor(0xffffffff);
+                  title.setTextSize(15f);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setGravity(Gravity.CENTER);
+                  title.setPadding(0,0,0,dp(14));
+                  menu.addView(title);
+
+                  LinearLayout row=new LinearLayout(this);
+                  row.setOrientation(LinearLayout.HORIZONTAL);
+                  row.setGravity(Gravity.CENTER);
+
+                  final TextView btnC=makeBtn("متابعة",0xff1a3a60,0xff4db8ff,0xffffffff);
+                  final TextView btnE=makeBtn("خروج",0xff3a0a00,0xffff4444,0xffff6666);
+                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
+                      LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT);
+                  lp.setMargins(0,0,dp(14),0); btnC.setLayoutParams(lp);
+                  row.addView(btnC); row.addView(btnE);
+                  menu.addView(row);
+
+                  final int[] sel={0};
+
+                  menu.setOnKeyListener((v,keyCode,event)->{
+                      if(event.getAction()!=KeyEvent.ACTION_DOWN) return false;
+                      switch(keyCode){
+                          case KeyEvent.KEYCODE_DPAD_LEFT:  sel[0]=0; highlight(btnC,btnE,0); return true;
+                          case KeyEvent.KEYCODE_DPAD_RIGHT: sel[0]=1; highlight(btnC,btnE,1); return true;
+                          case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER:
+                              if(sel[0]==0) dismissMenu(); else exitToLauncher(); return true;
+                          case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_BACK:
+                              dismissMenu(); return true;
+                      }
+                      return false;
+                  });
+
+                  btnC.setOnClickListener(v->dismissMenu());
+                  btnE.setOnClickListener(v->exitToLauncher());
+
+                  WindowManager.LayoutParams p=new WindowManager.LayoutParams(
+                      WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,
+                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                      WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                      PixelFormat.TRANSLUCENT
+                  );
+                  p.gravity=Gravity.CENTER;
+                  menuView=menu;
+                  wm.addView(menuView,p);
+                  menu.requestFocus();
+              }
+
+              private TextView makeBtn(String label,int bg,int stroke,int tc){
+                  TextView tv=new TextView(this);
+                  tv.setText(label); tv.setTextSize(13f);
+                  tv.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
+                  tv.setPadding(dp(22),dp(12),dp(22),dp(12));
+                  tv.setGravity(Gravity.CENTER); tv.setTextColor(tc);
+                  GradientDrawable gd=new GradientDrawable();
+                  gd.setColor(bg); gd.setStroke(dp(2),stroke); gd.setCornerRadius(dp(12));
+                  tv.setBackground(gd); return tv;
+              }
+
+              private void highlight(TextView c,TextView e,int sel){
+                  GradientDrawable gdC=new GradientDrawable(); gdC.setCornerRadius(dp(12));
+                  GradientDrawable gdE=new GradientDrawable(); gdE.setCornerRadius(dp(12));
+                  if(sel==0){gdC.setColor(0xff1a3a60);gdC.setStroke(dp(2),0xff4db8ff);c.setTextColor(0xffffffff);gdE.setColor(0xff3a0a00);gdE.setStroke(dp(1),0xff661111);e.setTextColor(0xff884444);}
+                  else{gdC.setColor(0xff0d1f38);gdC.setStroke(dp(1),0xff1a3060);c.setTextColor(0xff6a8ab0);gdE.setColor(0xff3a0a00);gdE.setStroke(dp(2),0xffff4444);e.setTextColor(0xffff6666);}
+                  c.setBackground(gdC); e.setBackground(gdE);
+              }
+
+              private void dismissMenu(){
+                  if(menuView!=null){try{wm.removeView(menuView);}catch(Exception ignored){} menuView=null;}
+                  menuShown=false; l1=false; l2=false;
+              }
+
+              private void exitToLauncher(){
+                  dismissMenu();
+                  Intent i=new Intent(this,PlatformActivity.class);
+                  i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                  startActivity(i);
+              }
+
+              @Override public void onDestroy(){
+                  super.onDestroy();
+                  try{if(dotView!=null) wm.removeView(dotView);}catch(Exception ignored){}
+                  dismissMenu();
+              }
+              @Override public IBinder onBind(Intent intent){return null;}
+          }
+          EOF
+
           cat > app/src/main/java/com/khaloahmed/launcher/PlatformActivity.java << 'EOF'
           package com.khaloahmed.launcher;
           import android.app.Activity; import android.content.Intent;
           import android.graphics.Typeface; import android.graphics.drawable.GradientDrawable;
-          import android.os.Bundle; import android.view.Gravity;
-          import android.view.InputDevice; import android.view.KeyEvent;
-          import android.view.MotionEvent; import android.view.View;
-          import android.view.WindowManager; import android.view.animation.AnimationUtils;
+          import android.net.Uri; import android.os.Bundle; import android.provider.Settings;
+          import android.view.Gravity; import android.view.InputDevice; import android.view.KeyEvent;
+          import android.view.MotionEvent; import android.view.View; import android.view.WindowManager;
+          import android.view.animation.AnimationUtils; import android.widget.ImageView;
           import android.widget.LinearLayout; import android.widget.TextView;
           import java.util.List;
 
           public class PlatformActivity extends Activity {
               private int selectedIdx=0,totalCards;
-              private boolean r1Pressed=false,r2Pressed=false;
+              private boolean r1=false,r2=false;
               private LinearLayout platformRow; private int[] gameCounts;
               private long lastMoveTime=0; private static final long MOVE_DELAY=140;
               private ExitDialog exitDialog;
@@ -676,9 +932,19 @@ jobs:
                   platformRow=findViewById(R.id.platformRow);
                   gameCounts=new int[Config.PLATFORMS.length];
                   for(int i=0;i<Config.PLATFORMS.length;i++) gameCounts[i]=GameScanner.scan(Config.PLATFORMS[i][0]).size();
-                  totalCards=Config.PLATFORMS.length+1; drawPlatforms(true);
+                  totalCards=Config.PLATFORMS.length+1;
+                  // طلب overlay permission مرة واحدة
+                  if(android.os.Build.VERSION.SDK_INT>=android.os.Build.VERSION_CODES.M&&!Settings.canDrawOverlays(this)){
+                      startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:"+getPackageName())));
+                  }
+                  drawPlatforms(true);
               }
-              @Override protected void onResume(){super.onResume(); updateRecentStrip();}
+
+              @Override protected void onResume(){
+                  super.onResume(); updateRecentStrip();
+                  // وقف الـ overlay لما نرجع للـ launcher
+                  Intent stop=new Intent(this,OverlayService.class); stop.setAction("STOP"); startService(stop);
+              }
 
               private void drawPlatforms(boolean animate){
                   platformRow.removeAllViews();
@@ -687,32 +953,27 @@ jobs:
                   updateRecentStrip();
               }
 
+              private int dp(int v){return(int)(v*getResources().getDisplayMetrics().density);}
+
               private LinearLayout buildPlatformCard(String[] p,boolean sel,int idx,boolean animate){
-                  // المربعات تمتد بطول الشاشة: weight=1 لكل كارت
                   LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER);
-                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,1f);
-                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,20,10,20);
-                  GradientDrawable gd=new GradientDrawable(); gd.setCornerRadius(0f);
-                  if(sel){
-                      gd.setColors(new int[]{0xff1a3a60,0xff0f2040});
-                      gd.setGradientType(GradientDrawable.LINEAR_GRADIENT);
-                      gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
-                      gd.setStroke(0,0); card.setBackground(gd); card.setElevation(32f); card.setAlpha(1f);
-                      // خط علوي مضيء للكارت المختار
-                      View topLine=new View(this);
-                      LinearLayout.LayoutParams lineLp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);
-                      topLine.setLayoutParams(lineLp); topLine.setBackgroundColor(0xff4db8ff);
-                      card.addView(topLine,0);
-                  } else {
-                      gd.setColor(0x220d1f38); gd.setStroke(0,0); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.55f);
-                  }
-                  TextView icon=new TextView(this); icon.setText(p[4]); icon.setTextSize(sel?48:36); icon.setGravity(Gravity.CENTER); card.addView(icon);
-                  TextView name=new TextView(this); name.setText(p[0]); name.setTextSize(sel?16:12);
+                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.MATCH_PARENT,1f);
+                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,16,10,16);
+                  GradientDrawable gd=new GradientDrawable();
+                  if(sel){gd.setColors(new int[]{0xff1a3a60,0xff0f2040});gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);card.setBackground(gd);card.setElevation(32f);card.setAlpha(1f);
+                      View tl=new View(this);LinearLayout.LayoutParams tlp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);tl.setLayoutParams(tlp);tl.setBackgroundColor(0xff4db8ff);card.addView(tl,0);
+                  }else{gd.setColor(0x220d1f38);card.setBackground(gd);card.setElevation(2f);card.setAlpha(0.55f);}
+                  // صورة الجهاز
+                  ImageView img=new ImageView(this);
+                  int res=0; switch(p[0]){case "PS1":res=R.drawable.console_ps1;break;case "PSP":res=R.drawable.console_psp;break;case "GBC":res=R.drawable.console_gbc;break;}
+                  if(res!=0){img.setImageResource(res);LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(sel?dp(90):dp(65),sel?dp(72):dp(52));ilp.gravity=Gravity.CENTER_HORIZONTAL;img.setLayoutParams(ilp);img.setAlpha(sel?1f:0.6f);card.addView(img);}
+                  else{TextView ic=new TextView(this);ic.setText(p[4]);ic.setTextSize(sel?44:32);ic.setGravity(Gravity.CENTER);card.addView(ic);}
+                  TextView name=new TextView(this); name.setText(p[0]); name.setTextSize(sel?15:11);
                   name.setTextColor(sel?0xff7dd8ff:0xff2a5070);
-                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,8,0,0); card.addView(name);
-                  TextView count=new TextView(this); count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(10);
+                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,6,0,0); card.addView(name);
+                  TextView count=new TextView(this); count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(9);
                   count.setTextColor(sel?0xff4db8ff:0xff0d2040);
-                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,4,0,0); card.addView(count);
+                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
                   final int i=idx; card.setOnClickListener(v->openPlatform(i));
                   if(sel&&animate) card.startAnimation(AnimationUtils.loadAnimation(this,R.anim.pop_in));
                   return card;
@@ -720,29 +981,20 @@ jobs:
 
               private LinearLayout buildRecentCard(boolean sel,boolean animate){
                   LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER);
-                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,1f);
-                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,20,10,20);
-                  GradientDrawable gd=new GradientDrawable(); gd.setCornerRadius(0f);
-                  if(sel){
-                      gd.setColors(new int[]{0xff3a1a0a,0xff220f05});
-                      gd.setGradientType(GradientDrawable.LINEAR_GRADIENT);
-                      gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
-                      gd.setStroke(0,0); card.setBackground(gd); card.setElevation(32f); card.setAlpha(1f);
-                      View topLine=new View(this);
-                      LinearLayout.LayoutParams lineLp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);
-                      topLine.setLayoutParams(lineLp); topLine.setBackgroundColor(0xffff9966);
-                      card.addView(topLine,0);
-                  } else {
-                      gd.setColor(0x22130a05); gd.setStroke(0,0); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.55f);
-                  }
-                  TextView icon=new TextView(this); icon.setText("🕐"); icon.setTextSize(sel?48:36); icon.setGravity(Gravity.CENTER); card.addView(icon);
-                  TextView name=new TextView(this); name.setText("RECENT"); name.setTextSize(sel?16:12);
+                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.MATCH_PARENT,1f);
+                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,16,10,16);
+                  GradientDrawable gd=new GradientDrawable();
+                  if(sel){gd.setColors(new int[]{0xff3a1a0a,0xff220f05});gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);card.setBackground(gd);card.setElevation(32f);card.setAlpha(1f);
+                      View tl=new View(this);LinearLayout.LayoutParams tlp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);tl.setLayoutParams(tlp);tl.setBackgroundColor(0xffff9966);card.addView(tl,0);
+                  }else{gd.setColor(0x22130a05);card.setBackground(gd);card.setElevation(2f);card.setAlpha(0.55f);}
+                  TextView icon=new TextView(this); icon.setText("🕐"); icon.setTextSize(sel?44:32); icon.setGravity(Gravity.CENTER); card.addView(icon);
+                  TextView name=new TextView(this); name.setText("RECENT"); name.setTextSize(sel?15:11);
                   name.setTextColor(sel?0xffff9966:0xff3a2010);
-                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,8,0,0); card.addView(name);
+                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,6,0,0); card.addView(name);
                   List<RecentEntry> r=RecentStore.load(this);
-                  TextView count=new TextView(this); count.setText(r.size()+" GAMES"); count.setTextSize(10);
+                  TextView count=new TextView(this); count.setText(r.size()+" GAMES"); count.setTextSize(9);
                   count.setTextColor(sel?0xffff9966:0xff2a1008);
-                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,4,0,0); card.addView(count);
+                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
                   card.setOnClickListener(v->openRecent());
                   if(sel&&animate) card.startAnimation(AnimationUtils.loadAnimation(this,R.anim.pop_in));
                   return card;
@@ -767,16 +1019,15 @@ jobs:
               }
 
               private String getPlatformIcon(String platform){for(String[] p:Config.PLATFORMS) if(p[0].equals(platform)) return p[4]; return "🎮";}
-              private void openPlatform(int idx){selectedIdx=idx; Intent i=new Intent(this,GamesActivity.class); i.putExtra("platformIdx",idx); startActivity(i); overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_left);}
-              private void openRecent(){startActivity(new Intent(this,RecentActivity.class)); overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_left);}
+              private void openPlatform(int idx){selectedIdx=idx;Intent i=new Intent(this,GamesActivity.class);i.putExtra("platformIdx",idx);startActivity(i);overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_left);}
+              private void openRecent(){startActivity(new Intent(this,RecentActivity.class));overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_left);}
               private void launchFromRecent(RecentEntry e){
                   for(int i=0;i<Config.PLATFORMS.length;i++) if(Config.PLATFORMS[i][0].equals(e.platform)){Intent intent=new Intent(this,GamesActivity.class);intent.putExtra("platformIdx",i);intent.putExtra("jumpToFile",e.file);startActivity(intent);overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_left);return;}
               }
-
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1Pressed=true;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2Pressed=true;
-                  if(r1Pressed&&r2Pressed){if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finish());exitDialog.show();}return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=true;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=true;
+                  if(r1&&r2){if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finish());exitDialog.show();}return true;}
                   switch(keyCode){
                       case KeyEvent.KEYCODE_DPAD_LEFT: if(selectedIdx>0){selectedIdx--;drawPlatforms(true);} return true;
                       case KeyEvent.KEYCODE_DPAD_RIGHT: if(selectedIdx<totalCards-1){selectedIdx++;drawPlatforms(true);} return true;
@@ -787,8 +1038,8 @@ jobs:
                   return super.onKeyDown(keyCode,event);
               }
               @Override public boolean onKeyUp(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1Pressed=false;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2Pressed=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=false;
                   return super.onKeyUp(keyCode,event);
               }
               @Override public boolean onGenericMotionEvent(MotionEvent event){
@@ -819,7 +1070,7 @@ jobs:
               private static final long DELAY_SLOW=200,DELAY_MEDIUM=80,DELAY_FAST=28;
               private long holdStart=0; private boolean holding=false; private int holdDir=0;
               private int platformIdx,selectedGame=0;
-              private boolean r1Pressed=false,r2Pressed=false;
+              private boolean r1=false,r2=false;
               private ListView listView; private ImageView previewImg,previewBg;
               private TextView noArtIcon,previewTitle,platformName,gameCount,lastPlayedBadge;
               private Handler handler=new Handler(); private Runnable previewRunnable,scrollRunnable;
@@ -887,55 +1138,40 @@ jobs:
                   if(!rom.exists()){toast("ملف اللعبة غير موجود");return;}
                   if(!isInstalled(cfg[2])){toast("المحاكي غير مثبت: "+cfg[2]);return;}
                   RecentStore.record(this,g); lastPlayedFile=g.file; lastPlayedBadge.setVisibility(View.VISIBLE);
+                  // نشغل الـ overlay قبل المحاكي
+                  startService(new Intent(this,OverlayService.class));
                   switch(cfg[2]){
-                      case "com.epsxe.ePSXe":         launchEpsxe(path);    break;
-                      case "com.fastemulator.gbc":     launchMyOldBoy(rom);  break;
-                      default:                         launchPpsspp(path);   break;
+                      case "com.epsxe.ePSXe":        launchEpsxe(path);   break;
+                      case "com.fastemulator.gbc":    launchMyOldBoy(rom); break;
+                      default:                        launchPpsspp(path);  break;
                   }
               }
 
-              // ── PS1: ACTION_MAIN + component + isoName كـ String (بالضبط زي Arc) ──
               private void launchEpsxe(String path){
-                  try{
-                      Intent i=new Intent(Intent.ACTION_MAIN);
-                      i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));
-                      i.putExtra("com.epsxe.ePSXe.isoName", path);
-                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                      startActivity(i);
-                  }catch(Exception e){toast("خطأ في تشغيل PS1: "+e.getMessage());}
+                  try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));i.putExtra("com.epsxe.ePSXe.isoName",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}
+                  catch(Exception e){toast("خطأ PS1: "+e.getMessage());}
               }
 
-              // ── GBC: ACTION_VIEW + component مباشرة لـ EmulatorActivity (بالضبط زي Arc) ──
               private void launchMyOldBoy(File rom){
-                  try{
-                      Intent i=new Intent(Intent.ACTION_VIEW);
-                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
-                      i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");
-                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                      startActivity(i);
-                  }catch(Exception e){toast("خطأ في تشغيل GBC: "+e.getMessage());}
+                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);}
+                  catch(Exception e){toast("خطأ GBC: "+e.getMessage());}
               }
 
               private void launchPpsspp(String path){
-                  try{
-                      Intent i=new Intent(Intent.ACTION_MAIN);
-                      i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
-                      i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);
-                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                      startActivity(i);
-                  }catch(Exception e){toast("خطأ في تشغيل PSP: "+e.getMessage());}
+                  try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}
+                  catch(Exception e){toast("خطأ PSP: "+e.getMessage());}
               }
 
               private void toast(String m){Toast.makeText(this,m,Toast.LENGTH_SHORT).show();}
               private void refreshList(){((GameAdapter)listView.getAdapter()).notifyDataSetChanged();listView.setSelection(selectedGame);}
 
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1Pressed=true;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2Pressed=true;
-                  if(r1Pressed&&r2Pressed){stopScroll();if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finishAffinity());exitDialog.show();}return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=true;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=true;
+                  if(r1&&r2){stopScroll();if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finishAffinity());exitDialog.show();}return true;}
                   switch(keyCode){
-                      case KeyEvent.KEYCODE_DPAD_UP:    if(event.getRepeatCount()==0) startScrollLoop(-1); return true;
-                      case KeyEvent.KEYCODE_DPAD_DOWN:  if(event.getRepeatCount()==0) startScrollLoop(1);  return true;
+                      case KeyEvent.KEYCODE_DPAD_UP:   if(event.getRepeatCount()==0) startScrollLoop(-1); return true;
+                      case KeyEvent.KEYCODE_DPAD_DOWN: if(event.getRepeatCount()==0) startScrollLoop(1);  return true;
                       case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER:
                           if(event.getRepeatCount()==0) launchGame(); return true;
                       case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_BACK:
@@ -944,8 +1180,8 @@ jobs:
                   return super.onKeyDown(keyCode,event);
               }
               @Override public boolean onKeyUp(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1Pressed=false;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2Pressed=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=false;
                   if(keyCode==KeyEvent.KEYCODE_DPAD_UP||keyCode==KeyEvent.KEYCODE_DPAD_DOWN) stopScroll();
                   return super.onKeyUp(keyCode,event);
               }
@@ -970,7 +1206,6 @@ jobs:
                       else vh=(ViewHolder)cv.getTag();
                       GameItem g=games.get(pos); boolean sel=(pos==selectedGame),last=g.file.equals(lastPlayedFile);
                       vh.num.setText(String.format("%02d",pos+1)); vh.name.setText(g.name);
-                      // السهم يظهر فقط في الـ selected item
                       vh.arrow.setVisibility(sel?View.VISIBLE:View.GONE);
                       if(sel){cv.setBackgroundColor(0xff1a3a60);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(14.5f);vh.num.setTextColor(0xff7dd8ff);vh.accent.setVisibility(View.VISIBLE);vh.accent.setBackgroundColor(0xff4db8ff);}
                       else if(last){cv.setBackgroundColor(0xff1a0f05);vh.name.setTextColor(0xffffbb88);vh.name.setTextSize(13.5f);vh.num.setTextColor(0xffff9966);vh.accent.setVisibility(View.VISIBLE);vh.accent.setBackgroundColor(0xffff9966);}
@@ -997,7 +1232,7 @@ jobs:
               private static final long DELAY_SLOW=200,DELAY_MEDIUM=80,DELAY_FAST=28;
               private long holdStart=0; private boolean holding=false; private int holdDir=0;
               private List<RecentEntry> entries; private int selectedIdx=0;
-              private boolean r1Pressed=false,r2Pressed=false;
+              private boolean r1=false,r2=false;
               private ListView listView; private ImageView previewImg,previewBg;
               private TextView noArtView,previewTitle,recentCount,platformBadge;
               private Handler handler=new Handler(); private Runnable previewRunnable,scrollRunnable;
@@ -1050,50 +1285,33 @@ jobs:
                   GameItem g=GameScanner.resolve(e); if(g==null){Toast.makeText(this,"اللعبة غير موجودة",Toast.LENGTH_SHORT).show();return;}
                   String[] cfg=null; for(String[] p:Config.PLATFORMS) if(p[0].equals(e.platform)){cfg=p;break;} if(cfg==null) return;
                   if(!isInstalled(cfg[2])){Toast.makeText(this,"المحاكي غير مثبت",Toast.LENGTH_SHORT).show();return;}
-                  RecentStore.record(this,g); File rom=new File(cfg[1]+"/"+e.file);
+                  RecentStore.record(this,g);
+                  startService(new Intent(this,OverlayService.class));
+                  File rom=new File(cfg[1]+"/"+e.file);
                   switch(cfg[2]){
-                      case "com.epsxe.ePSXe":         launchEpsxe(rom.getAbsolutePath()); break;
-                      case "com.fastemulator.gbc":     launchMyOldBoy(rom);                break;
-                      default:                         launchPpsspp(rom.getAbsolutePath()); break;
+                      case "com.epsxe.ePSXe":        launchEpsxe(rom.getAbsolutePath()); break;
+                      case "com.fastemulator.gbc":    launchMyOldBoy(rom);                break;
+                      default:                        launchPpsspp(rom.getAbsolutePath()); break;
                   }
               }
 
-              // ── PS1: نفس الـ intent بالضبط زي GamesActivity ──
               private void launchEpsxe(String path){
-                  try{
-                      Intent i=new Intent(Intent.ACTION_MAIN);
-                      i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));
-                      i.putExtra("com.epsxe.ePSXe.isoName", path);
-                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                      startActivity(i);
-                  }catch(Exception e){Toast.makeText(this,"خطأ PS1: "+e.getMessage(),Toast.LENGTH_SHORT).show();}
+                  try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));i.putExtra("com.epsxe.ePSXe.isoName",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}
+                  catch(Exception e){Toast.makeText(this,"خطأ PS1",Toast.LENGTH_SHORT).show();}
               }
-
-              // ── GBC: نفس الـ intent بالضبط زي GamesActivity ──
               private void launchMyOldBoy(File rom){
-                  try{
-                      Intent i=new Intent(Intent.ACTION_VIEW);
-                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
-                      i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");
-                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                      startActivity(i);
-                  }catch(Exception e){Toast.makeText(this,"خطأ GBC: "+e.getMessage(),Toast.LENGTH_SHORT).show();}
+                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);}
+                  catch(Exception e){Toast.makeText(this,"خطأ GBC",Toast.LENGTH_SHORT).show();}
               }
-
               private void launchPpsspp(String path){
-                  try{
-                      Intent i=new Intent(Intent.ACTION_MAIN);
-                      i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
-                      i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);
-                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                      startActivity(i);
-                  }catch(Exception e){Toast.makeText(this,"خطأ PSP: "+e.getMessage(),Toast.LENGTH_SHORT).show();}
+                  try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}
+                  catch(Exception e){Toast.makeText(this,"خطأ PSP",Toast.LENGTH_SHORT).show();}
               }
 
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1Pressed=true;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2Pressed=true;
-                  if(r1Pressed&&r2Pressed){stopScroll();if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finishAffinity());exitDialog.show();}return true;}
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=true;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=true;
+                  if(r1&&r2){stopScroll();if(exitDialog==null||!exitDialog.isShowing()){exitDialog=new ExitDialog(this,()->finishAffinity());exitDialog.show();}return true;}
                   switch(keyCode){
                       case KeyEvent.KEYCODE_DPAD_UP:   if(event.getRepeatCount()==0) startScrollLoop(-1); return true;
                       case KeyEvent.KEYCODE_DPAD_DOWN: if(event.getRepeatCount()==0) startScrollLoop(1);  return true;
@@ -1105,8 +1323,8 @@ jobs:
                   return super.onKeyDown(keyCode,event);
               }
               @Override public boolean onKeyUp(int keyCode,KeyEvent event){
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1Pressed=false;
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2Pressed=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R1) r1=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_R2) r2=false;
                   if(keyCode==KeyEvent.KEYCODE_DPAD_UP||keyCode==KeyEvent.KEYCODE_DPAD_DOWN) stopScroll();
                   return super.onKeyUp(keyCode,event);
               }
@@ -1132,7 +1350,6 @@ jobs:
                       RecentEntry e=entries.get(pos); boolean sel=(pos==selectedIdx);
                       vh.icon.setText(getPlatformIcon(e.platform)); vh.name.setText(e.name);
                       vh.platform.setText(e.platform+(pos==0?"  ★ LAST":""));
-                      // السهم يظهر فقط في الـ selected item
                       vh.arrow.setVisibility(sel?View.VISIBLE:View.GONE);
                       if(sel){cv.setBackgroundColor(0xff1a3a60);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(14.5f);vh.platform.setTextColor(0xff7dd8ff);vh.accent.setVisibility(View.VISIBLE);}
                       else{cv.setBackgroundColor(0x00000000);vh.name.setTextColor(0xff90b8e0);vh.name.setTextSize(13.5f);vh.platform.setTextColor(0xff3a6090);vh.accent.setVisibility(View.INVISIBLE);}
