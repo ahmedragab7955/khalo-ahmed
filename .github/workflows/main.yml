@@ -163,82 +163,121 @@ jobs:
 
           cat > app/src/main/res/drawable/console_ps1.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-              <item android:top="30dp" android:bottom="10dp" android:left="8dp" android:right="8dp">
-                  <shape android:shape="rectangle">
-                      <solid android:color="#1a1a2e"/>
-                      <corners android:radius="12dp"/>
-                  </shape>
-              </item>
-              <item android:top="18dp" android:bottom="50dp" android:left="20dp" android:right="20dp">
-                  <shape android:shape="rectangle">
-                      <solid android:color="#16213e"/>
-                      <corners android:radius="6dp"/>
-                  </shape>
-              </item>
-              <item android:top="35dp" android:bottom="20dp" android:left="35dp" android:right="35dp">
-                  <shape android:shape="oval">
-                      <solid android:color="#0f3460"/>
-                      <stroke android:width="2dp" android:color="#4db8ff"/>
-                  </shape>
-              </item>
-              <item android:top="52dp" android:bottom="37dp" android:left="52dp" android:right="52dp">
-                  <shape android:shape="oval">
-                      <solid android:color="#1a2a4a"/>
-                  </shape>
-              </item>
-          </layer-list>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="120dp" android:height="90dp"
+              android:viewportWidth="120" android:viewportHeight="90">
+              <!-- جسم PS1 الرئيسي -->
+              <path android:fillColor="#ffffff"
+                  android:pathData="M10,28 Q10,22 16,22 L104,22 Q110,22 110,28 L110,62 Q110,68 104,68 L16,68 Q10,68 10,62 Z"/>
+              <!-- الشاشة الداكنة / التحكم -->
+              <path android:fillColor="#1a2a4a"
+                  android:pathData="M18,30 L102,30 L102,60 L18,60 Z"/>
+              <!-- قرص CD دائري في المنتصف -->
+              <path android:fillColor="#ccddee" android:strokeColor="#4db8ff" android:strokeWidth="1.5"
+                  android:pathData="M60,45 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0"/>
+              <!-- حلقة داخلية القرص -->
+              <path android:fillColor="#1a2a4a" android:strokeColor="#7dd8ff" android:strokeWidth="1"
+                  android:pathData="M60,45 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+              <!-- أزرار يمين (مربع دائرة مثلث X) -->
+              <path android:fillColor="#ff6b9d"
+                  android:pathData="M88,36 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <path android:fillColor="#7dd8ff"
+                  android:pathData="M95,42 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <path android:fillColor="#ff0000" android:strokeWidth="0"
+                  android:pathData="M88,48 L85,54 L91,54 Z"/>
+              <path android:fillColor="#aaffaa"
+                  android:pathData="M82,42 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <!-- D-pad يسار -->
+              <path android:fillColor="#ffffff" android:fillAlpha="0.7"
+                  android:pathData="M26,39 L29,36 L32,39 L29,42 Z M23,42 L26,39 L26,45 L23,45 Z M32,39 L35,42 L35,45 L32,45 Z M26,45 L29,48 L32,45 Z"/>
+              <!-- شريط علوي رفيع -->
+              <path android:fillColor="#dddddd"
+                  android:pathData="M30,22 L90,22 L90,25 L30,25 Z"/>
+          </vector>
           EOF
 
           cat > app/src/main/res/drawable/console_psp.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-              <item android:top="15dp" android:bottom="15dp" android:left="4dp" android:right="4dp">
-                  <shape android:shape="rectangle">
-                      <solid android:color="#1a1a2e"/>
-                      <corners android:radius="18dp"/>
-                  </shape>
-              </item>
-              <item android:top="22dp" android:bottom="22dp" android:left="22dp" android:right="22dp">
-                  <shape android:shape="rectangle">
-                      <solid android:color="#0a1628"/>
-                      <corners android:radius="4dp"/>
-                      <stroke android:width="1dp" android:color="#4db8ff"/>
-                  </shape>
-              </item>
-              <item android:top="58dp" android:bottom="8dp" android:left="52dp" android:right="52dp">
-                  <shape android:shape="oval">
-                      <solid android:color="#0f3460"/>
-                      <stroke android:width="1dp" android:color="#4db8ff"/>
-                  </shape>
-              </item>
-          </layer-list>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="120dp" android:height="90dp"
+              android:viewportWidth="120" android:viewportHeight="90">
+              <!-- جسم PSP أفقي ممدود -->
+              <path android:fillColor="#ffffff"
+                  android:pathData="M8,30 Q8,24 16,24 L104,24 Q112,24 112,30 L112,60 Q112,66 104,66 L16,66 Q8,66 8,60 Z"/>
+              <!-- منطقة الشاشة المنتصف -->
+              <path android:fillColor="#0a1628" android:strokeColor="#4db8ff" android:strokeWidth="1.5"
+                  android:pathData="M32,30 L88,30 L88,60 L32,60 Z"/>
+              <!-- تفاصيل الشاشة - ضوء -->
+              <path android:fillColor="#1a3a5a"
+                  android:pathData="M34,32 L86,32 L86,58 L34,58 Z"/>
+              <!-- زرار Home دائري أسفل المنتصف -->
+              <path android:fillColor="#ccddee" android:strokeColor="#4db8ff" android:strokeWidth="1.5"
+                  android:pathData="M60,63 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
+              <!-- أزرار يمين (O X مربع مثلث) -->
+              <path android:fillColor="#ff6b9d"
+                  android:pathData="M98,38 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <path android:fillColor="#7dd8ff"
+                  android:pathData="M104,44 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <path android:fillColor="#ffffff" android:fillAlpha="0.8"
+                  android:pathData="M98,50 L95,56 L101,56 Z"/>
+              <path android:fillColor="#aaffaa"
+                  android:pathData="M92,44 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <!-- D-pad يسار -->
+              <path android:fillColor="#dddddd"
+                  android:pathData="M22,40 L25,37 L28,40 L25,43 Z M19,43 L22,40 L22,46 L19,46 Z M28,40 L31,43 L31,46 L28,46 Z M22,46 L25,49 L28,46 Z"/>
+              <!-- Analog stick يسار -->
+              <path android:fillColor="#cccccc" android:strokeColor="#aaaaaa" android:strokeWidth="1"
+                  android:pathData="M18,55 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+              <!-- زراير L R علوي -->
+              <path android:fillColor="#dddddd"
+                  android:pathData="M8,24 L28,24 L28,28 Q22,26 8,26 Z"/>
+              <path android:fillColor="#dddddd"
+                  android:pathData="M92,24 L112,24 L112,26 Q98,26 92,28 Z"/>
+          </vector>
           EOF
 
           cat > app/src/main/res/drawable/console_gbc.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-              <item android:top="4dp" android:bottom="4dp" android:left="14dp" android:right="14dp">
-                  <shape android:shape="rectangle">
-                      <solid android:color="#2a1a3e"/>
-                      <corners android:topLeftRadius="10dp" android:topRightRadius="10dp"
-                          android:bottomLeftRadius="20dp" android:bottomRightRadius="20dp"/>
-                  </shape>
-              </item>
-              <item android:top="12dp" android:bottom="42dp" android:left="24dp" android:right="24dp">
-                  <shape android:shape="rectangle">
-                      <solid android:color="#0a1628"/>
-                      <corners android:radius="3dp"/>
-                      <stroke android:width="1dp" android:color="#9966ff"/>
-                  </shape>
-              </item>
-              <item android:top="55dp" android:bottom="10dp" android:left="38dp" android:right="38dp">
-                  <shape android:shape="oval">
-                      <solid android:color="#3a0a5e"/>
-                      <stroke android:width="1dp" android:color="#9966ff"/>
-                  </shape>
-              </item>
-          </layer-list>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="90dp" android:height="120dp"
+              android:viewportWidth="90" android:viewportHeight="120">
+              <!-- جسم GBC عمودي -->
+              <path android:fillColor="#ffffff"
+                  android:pathData="M15,8 Q15,4 22,4 L68,4 Q75,4 75,8 L75,88 Q75,100 60,110 L30,110 Q15,100 15,88 Z"/>
+              <!-- الشاشة -->
+              <path android:fillColor="#0a1628" android:strokeColor="#9966ff" android:strokeWidth="2"
+                  android:pathData="M22,16 L68,16 L68,58 L22,58 Z"/>
+              <!-- ضوء الشاشة -->
+              <path android:fillColor="#1a1060"
+                  android:pathData="M24,18 L66,18 L66,56 L24,56 Z"/>
+              <!-- ليد جرين صغير -->
+              <path android:fillColor="#00ff88"
+                  android:pathData="M20,12 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+              <!-- D-pad -->
+              <path android:fillColor="#dddddd"
+                  android:pathData="M28,68 L33,63 L38,68 L33,73 Z M23,68 L28,63 L28,73 L23,73 Z M38,63 L43,68 L43,73 L38,73 Z M28,73 L33,78 L38,73 Z"/>
+              <!-- زراير A B -->
+              <path android:fillColor="#ff4466"
+                  android:pathData="M62,65 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0"/>
+              <path android:fillColor="#ff4466"
+                  android:pathData="M50,72 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+              <!-- نص A B -->
+              <path android:fillColor="#ffffff"
+                  android:pathData="M59,63 L61,67 L63,63 M60,65 L62,65" android:strokeColor="#ffffff" android:strokeWidth="1.5"/>
+              <!-- زراير Start Select -->
+              <path android:fillColor="#aaaaaa"
+                  android:pathData="M36,85 L44,85 L44,88 Q40,90 36,88 Z"/>
+              <path android:fillColor="#aaaaaa"
+                  android:pathData="M48,85 L56,85 L56,88 Q52,90 48,88 Z"/>
+              <!-- زراير L R علوي -->
+              <path android:fillColor="#dddddd"
+                  android:pathData="M15,14 L25,14 L25,18 Q20,16 15,16 Z"/>
+              <path android:fillColor="#dddddd"
+                  android:pathData="M65,14 L75,14 L75,16 Q70,16 65,18 Z"/>
+              <!-- تفاصيل Speaker شبكة -->
+              <path android:fillColor="#cccccc" android:strokeWidth="0"
+                  android:pathData="M58,88 L60,88 L60,100 L58,100 Z M62,88 L64,88 L64,100 L62,100 Z M66,88 L68,88 L68,100 L66,100 Z M70,88 L72,88 L72,100 L70,100 Z"/>
+          </vector>
           EOF
 
           cat > app/src/main/res/values/colors.xml << 'EOF'
@@ -724,28 +763,21 @@ jobs:
           }
           EOF
 
-          # ── OverlayService: نقطة صغيرة تحت شمال + L1+L2 يطلع قايمة ──
+          # ── OverlayService: نقطة بصرية فقط - بدون key detection عشان ميأثرش على الألعاب ──
           cat > app/src/main/java/com/khaloahmed/launcher/OverlayService.java << 'EOF'
           package com.khaloahmed.launcher;
           import android.app.Service;
           import android.content.Intent;
           import android.graphics.PixelFormat;
-          import android.graphics.Typeface;
-          import android.graphics.drawable.GradientDrawable;
           import android.os.IBinder;
           import android.view.Gravity;
-          import android.view.KeyEvent;
           import android.view.View;
           import android.view.WindowManager;
-          import android.widget.LinearLayout;
           import android.widget.TextView;
 
           public class OverlayService extends Service {
               private WindowManager wm;
               private View dotView;
-              private View menuView;
-              private boolean menuShown=false;
-              private boolean l1=false,l2=false;
 
               @Override public void onCreate(){
                   super.onCreate();
@@ -756,151 +788,34 @@ jobs:
               private int dp(int v){return(int)(v*getResources().getDisplayMetrics().density);}
 
               private void createDot(){
-                  // نقطة صغيرة شفافة جداً تحت شمال - مش باينة تقريباً
                   TextView dot=new TextView(this);
                   dot.setText("·");
-                  dot.setTextSize(10f);
-                  dot.setTextColor(0x22ffffff);
+                  dot.setTextSize(8f);
+                  dot.setTextColor(0x18ffffff); // شفاف جداً - مش باين تقريباً
 
-                  // بتستقبل key events عشان تشوف L1+L2
-                  dot.setFocusable(true);
-                  dot.setFocusableInTouchMode(true);
-
+                  // FLAG_NOT_FOCUSABLE + FLAG_NOT_TOUCHABLE عشان ميأثرش على input المحاكي
                   WindowManager.LayoutParams p=new WindowManager.LayoutParams(
-                      dp(14),dp(14),
+                      dp(10),dp(10),
                       WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                      WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                          |WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                          |WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                          |WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                       PixelFormat.TRANSLUCENT
                   );
                   p.gravity=Gravity.BOTTOM|Gravity.START;
                   p.x=dp(6); p.y=dp(6);
-
-                  dot.setOnKeyListener((v,keyCode,event)->{
-                      if(event.getAction()==KeyEvent.ACTION_DOWN){
-                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L1) l1=true;
-                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L2) l2=true;
-                          if(l1&&l2&&!menuShown) showMenu();
-                      } else if(event.getAction()==KeyEvent.ACTION_UP){
-                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L1) l1=false;
-                          if(keyCode==KeyEvent.KEYCODE_BUTTON_L2) l2=false;
-                      }
-                      return false;
-                  });
-
                   dotView=dot;
                   wm.addView(dotView,p);
               }
 
               @Override public int onStartCommand(Intent intent,int flags,int startId){
-                  if(intent!=null&&"SHOW_MENU".equals(intent.getAction())) showMenu();
-                  else if(intent!=null&&"STOP".equals(intent.getAction())) stopSelf();
+                  if(intent!=null&&"STOP".equals(intent.getAction())) stopSelf();
                   return START_STICKY;
-              }
-
-              private void showMenu(){
-                  if(menuShown) return;
-                  menuShown=true;
-
-                  LinearLayout menu=new LinearLayout(this);
-                  menu.setOrientation(LinearLayout.VERTICAL);
-                  menu.setGravity(Gravity.CENTER);
-                  menu.setPadding(dp(28),dp(22),dp(28),dp(22));
-                  menu.setFocusableInTouchMode(true);
-                  menu.setFocusable(true);
-
-                  GradientDrawable bg=new GradientDrawable();
-                  bg.setColors(new int[]{0xf20f1f3d,0xf2162440});
-                  bg.setCornerRadius(dp(16));
-                  bg.setStroke(dp(2),0xff4db8ff);
-                  menu.setBackground(bg);
-
-                  TextView title=new TextView(this);
-                  title.setText("إيقاف اللعبة؟");
-                  title.setTextColor(0xffffffff);
-                  title.setTextSize(15f);
-                  title.setTypeface(Typeface.DEFAULT_BOLD);
-                  title.setGravity(Gravity.CENTER);
-                  title.setPadding(0,0,0,dp(14));
-                  menu.addView(title);
-
-                  LinearLayout row=new LinearLayout(this);
-                  row.setOrientation(LinearLayout.HORIZONTAL);
-                  row.setGravity(Gravity.CENTER);
-
-                  final TextView btnC=makeBtn("متابعة",0xff1a3a60,0xff4db8ff,0xffffffff);
-                  final TextView btnE=makeBtn("خروج",0xff3a0a00,0xffff4444,0xffff6666);
-                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
-                      LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT);
-                  lp.setMargins(0,0,dp(14),0); btnC.setLayoutParams(lp);
-                  row.addView(btnC); row.addView(btnE);
-                  menu.addView(row);
-
-                  final int[] sel={0};
-
-                  menu.setOnKeyListener((v,keyCode,event)->{
-                      if(event.getAction()!=KeyEvent.ACTION_DOWN) return false;
-                      switch(keyCode){
-                          case KeyEvent.KEYCODE_DPAD_LEFT:  sel[0]=0; highlight(btnC,btnE,0); return true;
-                          case KeyEvent.KEYCODE_DPAD_RIGHT: sel[0]=1; highlight(btnC,btnE,1); return true;
-                          case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER:
-                              if(sel[0]==0) dismissMenu(); else exitToLauncher(); return true;
-                          case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_BACK:
-                              dismissMenu(); return true;
-                      }
-                      return false;
-                  });
-
-                  btnC.setOnClickListener(v->dismissMenu());
-                  btnE.setOnClickListener(v->exitToLauncher());
-
-                  WindowManager.LayoutParams p=new WindowManager.LayoutParams(
-                      WindowManager.LayoutParams.WRAP_CONTENT,WindowManager.LayoutParams.WRAP_CONTENT,
-                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                      WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                      PixelFormat.TRANSLUCENT
-                  );
-                  p.gravity=Gravity.CENTER;
-                  menuView=menu;
-                  wm.addView(menuView,p);
-                  menu.requestFocus();
-              }
-
-              private TextView makeBtn(String label,int bg,int stroke,int tc){
-                  TextView tv=new TextView(this);
-                  tv.setText(label); tv.setTextSize(13f);
-                  tv.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
-                  tv.setPadding(dp(22),dp(12),dp(22),dp(12));
-                  tv.setGravity(Gravity.CENTER); tv.setTextColor(tc);
-                  GradientDrawable gd=new GradientDrawable();
-                  gd.setColor(bg); gd.setStroke(dp(2),stroke); gd.setCornerRadius(dp(12));
-                  tv.setBackground(gd); return tv;
-              }
-
-              private void highlight(TextView c,TextView e,int sel){
-                  GradientDrawable gdC=new GradientDrawable(); gdC.setCornerRadius(dp(12));
-                  GradientDrawable gdE=new GradientDrawable(); gdE.setCornerRadius(dp(12));
-                  if(sel==0){gdC.setColor(0xff1a3a60);gdC.setStroke(dp(2),0xff4db8ff);c.setTextColor(0xffffffff);gdE.setColor(0xff3a0a00);gdE.setStroke(dp(1),0xff661111);e.setTextColor(0xff884444);}
-                  else{gdC.setColor(0xff0d1f38);gdC.setStroke(dp(1),0xff1a3060);c.setTextColor(0xff6a8ab0);gdE.setColor(0xff3a0a00);gdE.setStroke(dp(2),0xffff4444);e.setTextColor(0xffff6666);}
-                  c.setBackground(gdC); e.setBackground(gdE);
-              }
-
-              private void dismissMenu(){
-                  if(menuView!=null){try{wm.removeView(menuView);}catch(Exception ignored){} menuView=null;}
-                  menuShown=false; l1=false; l2=false;
-              }
-
-              private void exitToLauncher(){
-                  dismissMenu();
-                  Intent i=new Intent(this,PlatformActivity.class);
-                  i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                  startActivity(i);
               }
 
               @Override public void onDestroy(){
                   super.onDestroy();
                   try{if(dotView!=null) wm.removeView(dotView);}catch(Exception ignored){}
-                  dismissMenu();
               }
               @Override public IBinder onBind(Intent intent){return null;}
           }
@@ -966,7 +881,7 @@ jobs:
                   // صورة الجهاز
                   ImageView img=new ImageView(this);
                   int res=0; switch(p[0]){case "PS1":res=R.drawable.console_ps1;break;case "PSP":res=R.drawable.console_psp;break;case "GBC":res=R.drawable.console_gbc;break;}
-                  if(res!=0){img.setImageResource(res);LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(sel?dp(90):dp(65),sel?dp(72):dp(52));ilp.gravity=Gravity.CENTER_HORIZONTAL;img.setLayoutParams(ilp);img.setAlpha(sel?1f:0.6f);card.addView(img);}
+                  if(res!=0){img.setImageResource(res);LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(sel?dp(100):dp(80),sel?dp(80):dp(64));ilp.gravity=Gravity.CENTER_HORIZONTAL;img.setLayoutParams(ilp);img.setAlpha(sel?1f:0.75f);img.setColorFilter(sel?0x004db8ff:0xffffffff,android.graphics.PorterDuff.Mode.MULTIPLY);card.addView(img);}
                   else{TextView ic=new TextView(this);ic.setText(p[4]);ic.setTextSize(sel?44:32);ic.setGravity(Gravity.CENTER);card.addView(ic);}
                   TextView name=new TextView(this); name.setText(p[0]); name.setTextSize(sel?15:11);
                   name.setTextColor(sel?0xff7dd8ff:0xff2a5070);
@@ -1153,8 +1068,14 @@ jobs:
               }
 
               private void launchMyOldBoy(File rom){
-                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);}
-                  catch(Exception e){toast("خطأ GBC: "+e.getMessage());}
+                  // نجرب path مباشرة أولاً (My OldBoy بيقبل file:// URI)
+                  try{
+                      Intent i=new Intent(Intent.ACTION_VIEW);
+                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
+                      i.setDataAndType(android.net.Uri.parse("file://"+rom.getAbsolutePath()),"application/x-gbc-rom");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  }catch(Exception e){toast("خطأ GBC: "+e.getMessage());}
               }
 
               private void launchPpsspp(String path){
@@ -1300,8 +1221,13 @@ jobs:
                   catch(Exception e){Toast.makeText(this,"خطأ PS1",Toast.LENGTH_SHORT).show();}
               }
               private void launchMyOldBoy(File rom){
-                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);}
-                  catch(Exception e){Toast.makeText(this,"خطأ GBC",Toast.LENGTH_SHORT).show();}
+                  try{
+                      Intent i=new Intent(Intent.ACTION_VIEW);
+                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
+                      i.setDataAndType(android.net.Uri.parse("file://"+rom.getAbsolutePath()),"application/x-gbc-rom");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  }catch(Exception e){Toast.makeText(this,"خطأ GBC",Toast.LENGTH_SHORT).show();}
               }
               private void launchPpsspp(String path){
                   try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}
