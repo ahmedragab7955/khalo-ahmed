@@ -97,6 +97,7 @@ jobs:
                   <package android:name="com.epsxe.ePSXe"/>
                   <package android:name="org.ppsspp.ppsspp"/>
                   <package android:name="com.fastemulator.gbc"/>
+                  <package android:name="com.johnemulators.johngbc"/>
                   <intent>
                       <action android:name="android.intent.action.VIEW"/>
                       <data android:mimeType="*/*"/>
@@ -607,9 +608,9 @@ jobs:
           package com.khaloahmed.launcher;
           public class Config {
               public static final String[][] PLATFORMS = {
-                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",      ".bin,.iso,.img,.pbp,.cue", "🎮"},
-                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",     ".iso,.cso,.pbp",           "🕹️"},
-                  {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbc",  ".gbc,.gb,.zip",            "👾"},
+                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",         ".bin,.iso,.img,.pbp,.cue", "🎮", "/storage/0CF6-106E/backgrounds/ps1.jpg"},
+                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",        ".iso,.cso,.pbp",           "🕹️", "/storage/0CF6-106E/backgrounds/psp.jpg"},
+                  {"GBC", "/storage/0CF6-106E/gbc", "com.johnemulators.johngbc", ".gbc,.gb,.zip",            "👾", "/storage/0CF6-106E/backgrounds/gbc.jpg"},
               };
               public static final String[] IMAGE_EXTS = {".png",".jpg",".jpeg",".webp"};
               public static final String   PREFS_NAME  = "khalo_prefs";
@@ -758,7 +759,7 @@ jobs:
                   else{gdC.setColor(0xff0d1f38);gdC.setStroke(1,0xff1a3060);btnContinue.setTextColor(0xff6a8ab0);gdE.setColor(0xff3a0a00);gdE.setStroke(2,0xffff4444);btnExit.setTextColor(0xffff6666);}
                   btnContinue.setBackground(gdC); btnExit.setBackground(gdE);
               }
-              private void confirm(){dialog.dismiss(); if(selected==1) callback.onExit();}
+              private void confirm(){dialog.dismiss(); dialog=null; if(selected==1) callback.onExit();}
               public boolean isShowing(){return dialog!=null&&dialog.isShowing();}
           }
           EOF
@@ -873,22 +874,64 @@ jobs:
               private LinearLayout buildPlatformCard(String[] p,boolean sel,int idx,boolean animate){
                   LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER);
                   LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.MATCH_PARENT,1f);
-                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,16,10,16);
+                  lp.setMargins(3,0,3,0); card.setLayoutParams(lp); card.setPadding(8,12,8,12);
                   GradientDrawable gd=new GradientDrawable();
-                  if(sel){gd.setColors(new int[]{0xff1a3a60,0xff0f2040});gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);card.setBackground(gd);card.setElevation(32f);card.setAlpha(1f);
-                      View tl=new View(this);LinearLayout.LayoutParams tlp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);tl.setLayoutParams(tlp);tl.setBackgroundColor(0xff4db8ff);card.addView(tl,0);
-                  }else{gd.setColor(0x220d1f38);card.setBackground(gd);card.setElevation(2f);card.setAlpha(0.55f);}
-                  // صورة الجهاز
+                  if(sel){
+                      gd.setColors(new int[]{0xff1e3f6e,0xff0d2040});
+                      gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
+                      card.setBackground(gd); card.setElevation(40f); card.setAlpha(1f);
+                      View tl=new View(this);
+                      LinearLayout.LayoutParams tlp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,5);
+                      tl.setLayoutParams(tlp); tl.setBackgroundColor(0xff4db8ff); card.addView(tl,0);
+                  } else {
+                      gd.setColor(0x330d1f38); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.6f);
+                  }
+                  // صورة الجهاز (vector icon)
                   ImageView img=new ImageView(this);
-                  int res=0; switch(p[0]){case "PS1":res=R.drawable.console_ps1;break;case "PSP":res=R.drawable.console_psp;break;case "GBC":res=R.drawable.console_gbc;break;}
-                  if(res!=0){img.setImageResource(res);LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(sel?dp(100):dp(80),sel?dp(80):dp(64));ilp.gravity=Gravity.CENTER_HORIZONTAL;img.setLayoutParams(ilp);img.setAlpha(sel?1f:0.75f);img.setColorFilter(sel?0x004db8ff:0xffffffff,android.graphics.PorterDuff.Mode.MULTIPLY);card.addView(img);}
-                  else{TextView ic=new TextView(this);ic.setText(p[4]);ic.setTextSize(sel?44:32);ic.setGravity(Gravity.CENTER);card.addView(ic);}
-                  TextView name=new TextView(this); name.setText(p[0]); name.setTextSize(sel?15:11);
-                  name.setTextColor(sel?0xff7dd8ff:0xff2a5070);
-                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,6,0,0); card.addView(name);
-                  TextView count=new TextView(this); count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(9);
-                  count.setTextColor(sel?0xff4db8ff:0xff0d2040);
-                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
+                  int res=0;
+                  switch(p[0]){case "PS1":res=R.drawable.console_ps1;break;case "PSP":res=R.drawable.console_psp;break;case "GBC":res=R.drawable.console_gbc;break;}
+                  if(res!=0){
+                      img.setImageResource(res);
+                      LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(sel?dp(110):dp(88),sel?dp(88):dp(70));
+                      ilp.gravity=Gravity.CENTER_HORIZONTAL;
+                      img.setLayoutParams(ilp); img.setAlpha(sel?1f:0.8f);
+                      if(!sel) img.setColorFilter(0xffffffff,android.graphics.PorterDuff.Mode.MULTIPLY);
+                      card.addView(img);
+                  }
+                  // اسم المنصة - كبير واضح
+                  TextView name=new TextView(this); name.setText(p[0]);
+                  name.setTextSize(sel?18:13);
+                  name.setTextColor(sel?0xffffffff:0xff7aaad0);
+                  name.setGravity(Gravity.CENTER);
+                  name.setTypeface(Typeface.create("sans-serif-condensed",Typeface.BOLD));
+                  name.setLetterSpacing(0.25f); name.setPadding(0,8,0,0); card.addView(name);
+                  // عدد الألعاب
+                  TextView count=new TextView(this); count.setText(gameCounts[idx]+" GAMES");
+                  count.setTextSize(sel?10:8);
+                  count.setTextColor(sel?0xff4db8ff:0xff2a4a6a);
+                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,2,0,8); card.addView(count);
+                  // Thumbnail من الـ background folder
+                  String bgPath = p.length>5 ? p[5] : "";
+                  if(!bgPath.isEmpty()){
+                      java.io.File bgFile=new java.io.File(bgPath);
+                      if(bgFile.exists()){
+                          android.graphics.Bitmap bmp=android.graphics.BitmapFactory.decodeFile(bgPath);
+                          if(bmp!=null){
+                              ImageView thumb=new ImageView(this);
+                              thumb.setImageBitmap(bmp);
+                              int tw=sel?dp(160):dp(120); int th=sel?dp(80):dp(60);
+                              LinearLayout.LayoutParams tlp2=new LinearLayout.LayoutParams(tw,th);
+                              tlp2.gravity=Gravity.CENTER_HORIZONTAL;
+                              thumb.setLayoutParams(tlp2);
+                              thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                              GradientDrawable tgd=new GradientDrawable(); tgd.setCornerRadius(dp(8));
+                              tgd.setStroke(sel?2:1,sel?0xff4db8ff:0xff1a3060);
+                              thumb.setBackground(tgd); thumb.setClipToOutline(true);
+                              thumb.setAlpha(sel?1f:0.7f);
+                              card.addView(thumb);
+                          }
+                      }
+                  }
                   final int i=idx; card.setOnClickListener(v->openPlatform(i));
                   if(sel&&animate) card.startAnimation(AnimationUtils.loadAnimation(this,R.anim.pop_in));
                   return card;
@@ -1068,10 +1111,10 @@ jobs:
               }
 
               private void launchMyOldBoy(File rom){
-                  // نجرب path مباشرة أولاً (My OldBoy بيقبل file:// URI)
+                  // John GBC - بيقبل file path مباشرة
                   try{
                       Intent i=new Intent(Intent.ACTION_VIEW);
-                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
+                      i.setComponent(new ComponentName("com.johnemulators.johngbc","com.johnemulators.johngbc.MainActivity"));
                       i.setDataAndType(android.net.Uri.parse("file://"+rom.getAbsolutePath()),"application/x-gbc-rom");
                       i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                       startActivity(i);
@@ -1223,7 +1266,7 @@ jobs:
               private void launchMyOldBoy(File rom){
                   try{
                       Intent i=new Intent(Intent.ACTION_VIEW);
-                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
+                      i.setComponent(new ComponentName("com.johnemulators.johngbc","com.johnemulators.johngbc.MainActivity"));
                       i.setDataAndType(android.net.Uri.parse("file://"+rom.getAbsolutePath()),"application/x-gbc-rom");
                       i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
                       startActivity(i);
