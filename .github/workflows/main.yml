@@ -28,7 +28,6 @@ jobs:
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/anim
 
-          # settings.gradle
           cat > settings.gradle << 'EOF'
           pluginManagement {
               repositories { google(); mavenCentral(); gradlePluginPortal() }
@@ -46,53 +45,64 @@ jobs:
           android.enableJetifier=true
           EOF
 
-          # root build.gradle
           cat > build.gradle << 'EOF'
           plugins {
               id 'com.android.application' version '8.2.2' apply false
           }
           EOF
 
-          # app build.gradle
           cat > app/build.gradle << 'EOF'
           plugins { id 'com.android.application' }
           android {
               namespace 'com.khaloahmed.launcher'
               compileSdk 34
+
               defaultConfig {
                   applicationId "com.khaloahmed.launcher"
-                  minSdk 21; targetSdk 34
-                  versionCode 1; versionName "1.0"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
               }
+
               buildTypes {
-                  release { minifyEnabled false; signingConfig signingConfigs.debug }
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.debug
+                  }
               }
+
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_1_8
                   targetCompatibility JavaVersion.VERSION_1_8
               }
           }
+
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
           }
           EOF
 
-          # AndroidManifest
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
               package="com.khaloahmed.launcher">
+
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
               <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage"/>
               <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
               <uses-feature android:name="android.software.leanback" android:required="false"/>
+
               <application
                   android:allowBackup="true"
                   android:label="Khalo Ahmed"
                   android:requestLegacyExternalStorage="true"
                   android:theme="@style/AppTheme">
-                  <activity android:name=".PlatformActivity" android:exported="true"
+
+                  <activity
+                      android:name=".PlatformActivity"
+                      android:exported="true"
                       android:configChanges="orientation|keyboardHidden|screenSize"
                       android:screenOrientation="landscape">
                       <intent-filter>
@@ -101,14 +111,15 @@ jobs:
                           <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
                       </intent-filter>
                   </activity>
-                  <activity android:name=".GamesActivity"
+
+                  <activity
+                      android:name=".GamesActivity"
                       android:configChanges="orientation|keyboardHidden|screenSize"
                       android:screenOrientation="landscape"/>
               </application>
           </manifest>
           EOF
 
-          # colors.xml
           cat > app/src/main/res/values/colors.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -125,7 +136,6 @@ jobs:
           </resources>
           EOF
 
-          # styles.xml
           cat > app/src/main/res/values/styles.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -133,6 +143,7 @@ jobs:
                   <item name="android:windowBackground">@color/bg_dark</item>
                   <item name="android:windowAnimationStyle">@style/WindowAnim</item>
               </style>
+
               <style name="WindowAnim" parent="android:Animation.Activity">
                   <item name="android:activityOpenEnterAnimation">@anim/slide_in_right</item>
                   <item name="android:activityOpenExitAnimation">@anim/slide_out_left</item>
@@ -142,13 +153,6 @@ jobs:
           </resources>
           EOF
 
-          # gradle.properties
-          cat > gradle.properties << 'EOF'
-          android.useAndroidX=true
-          android.enableJetifier=true
-          EOF
-
-          # strings.xml
           cat > app/src/main/res/values/strings.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -156,52 +160,62 @@ jobs:
           </resources>
           EOF
 
-          # slide animations
           cat > app/src/main/res/anim/slide_in_right.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <translate xmlns:android="http://schemas.android.com/apk/res/android"
-              android:fromXDelta="100%" android:toXDelta="0%"
-              android:duration="300" android:interpolator="@android:anim/decelerate_interpolator"/>
+              android:fromXDelta="100%"
+              android:toXDelta="0%"
+              android:duration="300"
+              android:interpolator="@android:anim/decelerate_interpolator"/>
           EOF
 
           cat > app/src/main/res/anim/slide_out_left.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <translate xmlns:android="http://schemas.android.com/apk/res/android"
-              android:fromXDelta="0%" android:toXDelta="-100%"
-              android:duration="300" android:interpolator="@android:anim/decelerate_interpolator"/>
+              android:fromXDelta="0%"
+              android:toXDelta="-100%"
+              android:duration="300"
+              android:interpolator="@android:anim/decelerate_interpolator"/>
           EOF
 
           cat > app/src/main/res/anim/slide_in_left.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <translate xmlns:android="http://schemas.android.com/apk/res/android"
-              android:fromXDelta="-100%" android:toXDelta="0%"
-              android:duration="300" android:interpolator="@android:anim/decelerate_interpolator"/>
+              android:fromXDelta="-100%"
+              android:toXDelta="0%"
+              android:duration="300"
+              android:interpolator="@android:anim/decelerate_interpolator"/>
           EOF
 
           cat > app/src/main/res/anim/slide_out_right.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <translate xmlns:android="http://schemas.android.com/apk/res/android"
-              android:fromXDelta="0%" android:toXDelta="100%"
-              android:duration="300" android:interpolator="@android:anim/decelerate_interpolator"/>
+              android:fromXDelta="0%"
+              android:toXDelta="100%"
+              android:duration="300"
+              android:interpolator="@android:anim/decelerate_interpolator"/>
           EOF
 
           cat > app/src/main/res/anim/fade_in.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <alpha xmlns:android="http://schemas.android.com/apk/res/android"
-              android:fromAlpha="0.0" android:toAlpha="1.0"
-              android:duration="250" android:interpolator="@android:anim/decelerate_interpolator"/>
+              android:fromAlpha="0.0"
+              android:toAlpha="1.0"
+              android:duration="250"
+              android:interpolator="@android:anim/decelerate_interpolator"/>
           EOF
 
-          # layout: activity_platform.xml
           cat > app/src/main/res/layout/activity_platform.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent" android:layout_height="match_parent"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:background="@color/bg_dark">
 
-              <!-- Title -->
-              <TextView android:id="@+id/title"
-                  android:layout_width="wrap_content" android:layout_height="wrap_content"
+              <TextView
+                  android:id="@+id/title"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
                   android:layout_centerHorizontal="true"
                   android:layout_marginTop="40dp"
                   android:text="KHALO AHMED"
@@ -211,17 +225,18 @@ jobs:
                   android:letterSpacing="0.2"
                   android:fontFamily="sans-serif-condensed"/>
 
-              <!-- Platform cards row -->
-              <LinearLayout android:id="@+id/platformRow"
-                  android:layout_width="wrap_content" android:layout_height="wrap_content"
+              <LinearLayout
+                  android:id="@+id/platformRow"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
                   android:layout_centerInParent="true"
                   android:orientation="horizontal"
                   android:gravity="center"
                   android:layout_marginTop="20dp"/>
 
-              <!-- Hint -->
               <TextView
-                  android:layout_width="wrap_content" android:layout_height="wrap_content"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
                   android:layout_alignParentBottom="true"
                   android:layout_centerHorizontal="true"
                   android:layout_marginBottom="20dp"
@@ -231,43 +246,50 @@ jobs:
           </RelativeLayout>
           EOF
 
-          # layout: activity_games.xml
           cat > app/src/main/res/layout/activity_games.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent" android:layout_height="match_parent"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:background="@color/bg_dark"
               android:orientation="horizontal">
 
-              <!-- LEFT: game list -->
               <LinearLayout
-                  android:layout_width="0dp" android:layout_height="match_parent"
+                  android:layout_width="0dp"
+                  android:layout_height="match_parent"
                   android:layout_weight="4"
                   android:background="@color/bg_left"
                   android:orientation="vertical">
 
-                  <!-- Header -->
                   <LinearLayout
-                      android:layout_width="match_parent" android:layout_height="wrap_content"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
                       android:orientation="vertical"
                       android:padding="24dp"
                       android:background="@color/bg_card">
-                      <TextView android:id="@+id/platformName"
-                          android:layout_width="wrap_content" android:layout_height="wrap_content"
+
+                      <TextView
+                          android:id="@+id/platformName"
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
                           android:textColor="@color/accent2"
                           android:textSize="11sp"
                           android:textStyle="bold"
                           android:letterSpacing="0.2"/>
-                      <TextView android:id="@+id/gameCount"
-                          android:layout_width="wrap_content" android:layout_height="wrap_content"
+
+                      <TextView
+                          android:id="@+id/gameCount"
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
                           android:textColor="@color/text_dim"
                           android:textSize="11sp"
                           android:layout_marginTop="4dp"/>
                   </LinearLayout>
 
-                  <!-- Game list -->
-                  <ListView android:id="@+id/gameList"
-                      android:layout_width="match_parent" android:layout_height="0dp"
+                  <ListView
+                      android:id="@+id/gameList"
+                      android:layout_width="match_parent"
+                      android:layout_height="0dp"
                       android:layout_weight="1"
                       android:divider="@color/bg_card"
                       android:dividerHeight="1dp"
@@ -275,36 +297,40 @@ jobs:
                       android:focusable="false"/>
               </LinearLayout>
 
-              <!-- RIGHT: preview -->
               <FrameLayout
-                  android:layout_width="0dp" android:layout_height="match_parent"
+                  android:layout_width="0dp"
+                  android:layout_height="match_parent"
                   android:layout_weight="6"
                   android:background="#000000">
 
-                  <!-- blurred background -->
-                  <ImageView android:id="@+id/previewBg"
-                      android:layout_width="match_parent" android:layout_height="match_parent"
+                  <ImageView
+                      android:id="@+id/previewBg"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
                       android:scaleType="centerCrop"
                       android:alpha="0.3"/>
 
-                  <!-- main art -->
-                  <ImageView android:id="@+id/previewImg"
-                      android:layout_width="wrap_content" android:layout_height="match_parent"
+                  <ImageView
+                      android:id="@+id/previewImg"
+                      android:layout_width="wrap_content"
+                      android:layout_height="match_parent"
                       android:layout_gravity="center"
                       android:scaleType="fitCenter"
                       android:adjustViewBounds="true"
                       android:padding="30dp"/>
 
-                  <!-- no art icon -->
-                  <TextView android:id="@+id/noArtIcon"
-                      android:layout_width="wrap_content" android:layout_height="wrap_content"
+                  <TextView
+                      android:id="@+id/noArtIcon"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
                       android:layout_gravity="center"
                       android:textSize="80sp"
                       android:visibility="gone"/>
 
-                  <!-- game title overlay -->
-                  <TextView android:id="@+id/previewTitle"
-                      android:layout_width="match_parent" android:layout_height="wrap_content"
+                  <TextView
+                      android:id="@+id/previewTitle"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
                       android:layout_gravity="bottom"
                       android:padding="20dp"
                       android:textColor="#ffffffcc"
@@ -316,24 +342,28 @@ jobs:
           </LinearLayout>
           EOF
 
-          # layout: item_game.xml
           cat > app/src/main/res/layout/item_game.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent" android:layout_height="wrap_content"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
               android:orientation="horizontal"
               android:padding="16dp"
               android:paddingStart="24dp"
               android:gravity="center_vertical">
 
-              <TextView android:id="@+id/gameNum"
-                  android:layout_width="32dp" android:layout_height="wrap_content"
+              <TextView
+                  android:id="@+id/gameNum"
+                  android:layout_width="32dp"
+                  android:layout_height="wrap_content"
                   android:textColor="@color/text_dim"
                   android:textSize="10sp"
                   android:fontFamily="monospace"/>
 
-              <TextView android:id="@+id/gameName"
-                  android:layout_width="0dp" android:layout_height="wrap_content"
+              <TextView
+                  android:id="@+id/gameName"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
                   android:layout_weight="1"
                   android:textColor="#aaaacc"
                   android:textSize="15sp"
@@ -344,52 +374,74 @@ jobs:
 
       - name: Create Java files
         run: |
-          # Config.java
           cat > app/src/main/java/com/khaloahmed/launcher/Config.java << 'EOF'
           package com.khaloahmed.launcher;
+
           public class Config {
               public static final String[][] PLATFORMS = {
-                  {"PS1",  "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",          ".bin,.iso,.img,.pbp,.cue", "🎮"},
-                  {"PSP",  "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",         ".iso,.cso,.pbp",           "🕹️"},
-                  {"GBC",  "/storage/0CF6-106E/gbc", "com.fastemulator.gbcfree",  ".gbc,.gb,.zip",            "👾"},
+                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe", ".bin,.iso,.img,.pbp,.cue", "🎮"},
+                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp", ".iso,.cso,.pbp", "🕹️"},
+                  {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbcfree", ".gbc,.gb,.zip", "👾"},
               };
+
               public static final String[] IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"};
           }
           EOF
 
-          # GameItem.java
           cat > app/src/main/java/com/khaloahmed/launcher/GameItem.java << 'EOF'
           package com.khaloahmed.launcher;
+
           public class GameItem {
               public String name, file, artPath, platform;
+
               public GameItem(String name, String file, String artPath, String platform) {
-                  this.name=name; this.file=file; this.artPath=artPath; this.platform=platform;
+                  this.name = name;
+                  this.file = file;
+                  this.artPath = artPath;
+                  this.platform = platform;
               }
           }
           EOF
 
-          # GameScanner.java
           cat > app/src/main/java/com/khaloahmed/launcher/GameScanner.java << 'EOF'
           package com.khaloahmed.launcher;
-          import java.io.*;
-          import java.util.*;
+
+          import java.io.File;
+          import java.util.ArrayList;
+          import java.util.Arrays;
+          import java.util.Collections;
+          import java.util.Comparator;
+          import java.util.HashMap;
+          import java.util.HashSet;
+          import java.util.List;
+          import java.util.Map;
+          import java.util.Set;
+
           public class GameScanner {
               public static List<GameItem> scan(String platformKey) {
                   List<GameItem> result = new ArrayList<>();
                   String[] cfg = null;
+
                   for (String[] p : Config.PLATFORMS) {
-                      if (p[0].equals(platformKey)) { cfg = p; break; }
+                      if (p[0].equals(platformKey)) {
+                          cfg = p;
+                          break;
+                      }
                   }
+
                   if (cfg == null) return result;
+
                   String folderPath = cfg[1];
-                  String extsStr   = cfg[3];
+                  String extsStr = cfg[3];
                   Set<String> exts = new HashSet<>(Arrays.asList(extsStr.split(",")));
+
                   File dir = new File(folderPath);
                   if (!dir.exists() || !dir.isDirectory()) return result;
+
                   File[] files = dir.listFiles();
                   if (files == null) return result;
-                  // build art map
-                  Map<String,String> artMap = new HashMap<>();
+
+                  Map<String, String> artMap = new HashMap<>();
                   for (File f : files) {
                       String n = f.getName().toLowerCase();
                       for (String ie : Config.IMAGE_EXTS) {
@@ -398,37 +450,61 @@ jobs:
                           }
                       }
                   }
-                  // find roms
+
                   for (File f : files) {
                       if (!f.isFile()) continue;
-                      String nm = f.getName(), nl = nm.toLowerCase();
+
+                      String nm = f.getName();
+                      String nl = nm.toLowerCase();
                       boolean isRom = false;
-                      for (String x : exts) { if (nl.endsWith(x.trim())) { isRom=true; break; } }
+
+                      for (String x : exts) {
+                          if (nl.endsWith(x.trim())) {
+                              isRom = true;
+                              break;
+                          }
+                      }
+
                       if (!isRom) continue;
+
                       String base = nm.contains(".") ? nm.substring(0, nm.lastIndexOf('.')) : nm;
                       String displayName = base.replaceAll("[_\\-]", " ").trim();
                       String art = artMap.containsKey(base.toLowerCase()) ? artMap.get(base.toLowerCase()) : "";
+
                       result.add(new GameItem(displayName, nm, art, platformKey));
                   }
+
                   Collections.sort(result, new Comparator<GameItem>() {
-                      public int compare(GameItem a, GameItem b) { return a.name.compareToIgnoreCase(b.name); }
+                      @Override
+                      public int compare(GameItem a, GameItem b) {
+                          return a.name.compareToIgnoreCase(b.name);
+                      }
                   });
+
                   return result;
               }
           }
           EOF
 
-          # PlatformActivity.java
           cat > app/src/main/java/com/khaloahmed/launcher/PlatformActivity.java << 'EOF'
           package com.khaloahmed.launcher;
+
           import android.app.Activity;
           import android.content.Intent;
-          import android.graphics.*;
+          import android.graphics.Typeface;
           import android.graphics.drawable.GradientDrawable;
           import android.os.Bundle;
-          import android.view.*;
-          import android.view.animation.*;
-          import android.widget.*;
+          import android.view.Gravity;
+          import android.view.InputDevice;
+          import android.view.KeyEvent;
+          import android.view.MotionEvent;
+          import android.view.View;
+          import android.view.WindowManager;
+          import android.view.animation.Animation;
+          import android.view.animation.ScaleAnimation;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+
           import java.util.List;
 
           public class PlatformActivity extends Activity {
@@ -436,37 +512,48 @@ jobs:
               private boolean startPressed = false, selectPressed = false;
               private LinearLayout platformRow;
               private int[] gameCounts;
+              private long lastMoveTime = 0;
+              private static final long PLATFORM_MOVE_DELAY = 120;
 
               @Override
               protected void onCreate(Bundle s) {
                   super.onCreate(s);
-                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
                   getWindow().getDecorView().setSystemUiVisibility(
-                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                  | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
                   setContentView(R.layout.activity_platform);
                   platformRow = findViewById(R.id.platformRow);
-                  // count games per platform
+
                   gameCounts = new int[Config.PLATFORMS.length];
-                  for (int i=0;i<Config.PLATFORMS.length;i++) {
+                  for (int i = 0; i < Config.PLATFORMS.length; i++) {
                       List<GameItem> games = GameScanner.scan(Config.PLATFORMS[i][0]);
                       gameCounts[i] = games.size();
                   }
+
                   drawPlatforms();
               }
 
               private void drawPlatforms() {
                   platformRow.removeAllViews();
+
                   for (int i = 0; i < Config.PLATFORMS.length; i++) {
                       String[] p = Config.PLATFORMS[i];
                       boolean sel = (i == selectedIdx);
-                      // Card
+
                       LinearLayout card = new LinearLayout(this);
                       card.setOrientation(LinearLayout.VERTICAL);
                       card.setGravity(Gravity.CENTER);
+
                       LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(220, 220);
-                      lp.setMargins(30,0,30,0);
+                      lp.setMargins(30, 0, 30, 0);
                       card.setLayoutParams(lp);
-                      card.setPadding(16,16,16,16);
+                      card.setPadding(16, 16, 16, 16);
 
                       if (sel) {
                           GradientDrawable gd = new GradientDrawable();
@@ -474,12 +561,15 @@ jobs:
                           gd.setColor(0xff1a1a35);
                           gd.setStroke(4, 0xff7c5cbf);
                           card.setBackground(gd);
-                          // glow effect via elevation
                           card.setElevation(24f);
-                          // scale animation
-                          ScaleAnimation scale = new ScaleAnimation(0.95f,1.08f,0.95f,1.08f,
-                              Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
-                          scale.setDuration(150); scale.setFillAfter(true);
+
+                          ScaleAnimation scale = new ScaleAnimation(
+                                  0.95f, 1.08f, 0.95f, 1.08f,
+                                  Animation.RELATIVE_TO_SELF, 0.5f,
+                                  Animation.RELATIVE_TO_SELF, 0.5f
+                          );
+                          scale.setDuration(150);
+                          scale.setFillAfter(true);
                           card.startAnimation(scale);
                       } else {
                           GradientDrawable gd = new GradientDrawable();
@@ -490,14 +580,12 @@ jobs:
                           card.setAlpha(0.45f);
                       }
 
-                      // Icon
                       TextView icon = new TextView(this);
                       icon.setText(p[4]);
                       icon.setTextSize(sel ? 42 : 36);
                       icon.setGravity(Gravity.CENTER);
                       card.addView(icon);
 
-                      // Name
                       TextView name = new TextView(this);
                       name.setText(p[0]);
                       name.setTextSize(sel ? 16 : 13);
@@ -505,21 +593,21 @@ jobs:
                       name.setGravity(Gravity.CENTER);
                       name.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
                       name.setLetterSpacing(0.15f);
-                      name.setPadding(0,8,0,0);
+                      name.setPadding(0, 8, 0, 0);
                       card.addView(name);
 
-                      // Count
                       TextView count = new TextView(this);
                       count.setText(gameCounts[i] + " GAMES");
                       count.setTextSize(10);
                       count.setTextColor(sel ? 0xffaaaacc : 0xff334060);
                       count.setGravity(Gravity.CENTER);
                       count.setTypeface(Typeface.MONOSPACE);
-                      count.setPadding(0,4,0,0);
+                      count.setPadding(0, 4, 0, 0);
                       card.addView(count);
 
                       final int idx = i;
                       card.setOnClickListener(v -> openPlatform(idx));
+
                       platformRow.addView(card);
                   }
               }
@@ -534,28 +622,46 @@ jobs:
 
               @Override
               public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = true;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = true;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
-                  if (startPressed && selectPressed) { finish(); return true; }
+                  if (startPressed && selectPressed) {
+                      finish();
+                      return true;
+                  }
+
                   switch (keyCode) {
                       case KeyEvent.KEYCODE_DPAD_LEFT:
-                          if (selectedIdx > 0) { selectedIdx--; drawPlatforms(); } return true;
+                          if (selectedIdx > 0) {
+                              selectedIdx--;
+                              drawPlatforms();
+                          }
+                          return true;
+
                       case KeyEvent.KEYCODE_DPAD_RIGHT:
-                          if (selectedIdx < Config.PLATFORMS.length-1) { selectedIdx++; drawPlatforms(); } return true;
+                          if (selectedIdx < Config.PLATFORMS.length - 1) {
+                              selectedIdx++;
+                              drawPlatforms();
+                          }
+                          return true;
+
                       case KeyEvent.KEYCODE_BUTTON_A:
                       case KeyEvent.KEYCODE_ENTER:
                       case KeyEvent.KEYCODE_DPAD_CENTER:
-                          openPlatform(selectedIdx); return true;
+                          openPlatform(selectedIdx);
+                          return true;
+
                       case KeyEvent.KEYCODE_BACK:
                       case KeyEvent.KEYCODE_BUTTON_B:
-                          finish(); return true;
+                          finish();
+                          return true;
                   }
+
                   return super.onKeyDown(keyCode, event);
               }
 
               @Override
               public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = false;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
                   return super.onKeyUp(keyCode, event);
               }
@@ -563,68 +669,107 @@ jobs:
               @Override
               public boolean onGenericMotionEvent(MotionEvent event) {
                   if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
-                      && event.getAction() == MotionEvent.ACTION_MOVE) {
+                          && event.getAction() == MotionEvent.ACTION_MOVE) {
+
+                      long now = System.currentTimeMillis();
+                      if (now - lastMoveTime < PLATFORM_MOVE_DELAY) return true;
+
                       float x = event.getAxisValue(MotionEvent.AXIS_X);
                       float hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X);
+
                       if (x < -0.5f || hatX < -0.5f) {
-                          if (selectedIdx > 0) { selectedIdx--; drawPlatforms(); }
+                          if (selectedIdx > 0) {
+                              selectedIdx--;
+                              lastMoveTime = now;
+                              drawPlatforms();
+                          }
                       } else if (x > 0.5f || hatX > 0.5f) {
-                          if (selectedIdx < Config.PLATFORMS.length-1) { selectedIdx++; drawPlatforms(); }
+                          if (selectedIdx < Config.PLATFORMS.length - 1) {
+                              selectedIdx++;
+                              lastMoveTime = now;
+                              drawPlatforms();
+                          }
                       }
+
                       return true;
                   }
+
                   return super.onGenericMotionEvent(event);
               }
           }
           EOF
 
-          # GamesActivity.java
           cat > app/src/main/java/com/khaloahmed/launcher/GamesActivity.java << 'EOF'
           package com.khaloahmed.launcher;
+
           import android.app.Activity;
           import android.content.Intent;
-          import android.graphics.*;
+          import android.content.pm.ResolveInfo;
+          import android.graphics.Bitmap;
+          import android.graphics.BitmapFactory;
           import android.net.Uri;
           import android.os.Bundle;
           import android.os.Handler;
-          import android.view.*;
-          import android.view.animation.*;
-          import android.widget.*;
+          import android.view.InputDevice;
+          import android.view.KeyEvent;
+          import android.view.MotionEvent;
+          import android.view.View;
+          import android.view.ViewGroup;
+          import android.view.WindowManager;
+          import android.view.animation.Animation;
+          import android.view.animation.AnimationUtils;
+          import android.widget.AdapterView;
+          import android.widget.BaseAdapter;
+          import android.widget.ImageView;
+          import android.widget.ListView;
+          import android.widget.TextView;
+          import android.widget.Toast;
+
           import java.io.File;
-          import java.util.*;
+          import java.util.List;
 
           public class GamesActivity extends Activity {
               private int platformIdx;
               private List<GameItem> games;
               private int selectedGame = 0;
-              private boolean startPressed=false, selectPressed=false;
+              private boolean startPressed = false, selectPressed = false;
+
               private ListView listView;
               private ImageView previewImg, previewBg;
               private TextView noArtIcon, previewTitle, platformName, gameCount;
+
               private Handler handler = new Handler();
               private Runnable previewRunnable;
+
               private long lastInput = 0;
-              private static final long INPUT_DELAY = 180;
+              private static final long INPUT_DELAY = 60;
+              private static final long JOYSTICK_DELAY = 45;
 
               @Override
               protected void onCreate(Bundle s) {
                   super.onCreate(s);
-                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                          WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
                   getWindow().getDecorView().setSystemUiVisibility(
-                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                  | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
                   setContentView(R.layout.activity_games);
 
                   platformIdx = getIntent().getIntExtra("platformIdx", 0);
                   String[] cfg = Config.PLATFORMS[platformIdx];
                   games = GameScanner.scan(cfg[0]);
 
-                  listView    = findViewById(R.id.gameList);
-                  previewImg  = findViewById(R.id.previewImg);
-                  previewBg   = findViewById(R.id.previewBg);
-                  noArtIcon   = findViewById(R.id.noArtIcon);
-                  previewTitle= findViewById(R.id.previewTitle);
-                  platformName= findViewById(R.id.platformName);
-                  gameCount   = findViewById(R.id.gameCount);
+                  listView = findViewById(R.id.gameList);
+                  previewImg = findViewById(R.id.previewImg);
+                  previewBg = findViewById(R.id.previewBg);
+                  noArtIcon = findViewById(R.id.noArtIcon);
+                  previewTitle = findViewById(R.id.previewTitle);
+                  platformName = findViewById(R.id.platformName);
+                  gameCount = findViewById(R.id.gameCount);
 
                   platformName.setText(cfg[0]);
                   gameCount.setText(games.size() + " GAMES");
@@ -636,15 +781,27 @@ jobs:
               private void setupList() {
                   GameAdapter adapter = new GameAdapter();
                   listView.setAdapter(adapter);
-                  listView.setOnItemClickListener((p, v, pos, id) -> {
-                      selectedGame = pos;
-                      adapter.notifyDataSetChanged();
-                      updatePreview(true);
+
+                  listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                      @Override
+                      public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
+                          selectedGame = pos;
+                          adapter.notifyDataSetChanged();
+                          updatePreview(true);
+                      }
                   });
               }
 
               private void updatePreview(boolean animate) {
-                  if (games.isEmpty()) return;
+                  if (games.isEmpty()) {
+                      previewTitle.setText("لا توجد ألعاب");
+                      previewImg.setVisibility(View.GONE);
+                      previewBg.setVisibility(View.GONE);
+                      noArtIcon.setVisibility(View.VISIBLE);
+                      noArtIcon.setText(Config.PLATFORMS[platformIdx][4]);
+                      return;
+                  }
+
                   GameItem g = games.get(selectedGame);
                   previewTitle.setText(g.name);
 
@@ -658,6 +815,7 @@ jobs:
                               previewImg.setVisibility(View.VISIBLE);
                               previewBg.setVisibility(View.VISIBLE);
                               noArtIcon.setVisibility(View.GONE);
+
                               if (animate) {
                                   Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in);
                                   previewImg.startAnimation(fadeIn);
@@ -666,73 +824,174 @@ jobs:
                           }
                       }
                   }
-                  // No art
+
                   previewImg.setVisibility(View.GONE);
                   previewBg.setVisibility(View.GONE);
                   noArtIcon.setVisibility(View.VISIBLE);
                   noArtIcon.setText(Config.PLATFORMS[platformIdx][4]);
               }
 
+              private boolean isAppInstalled(String packageName) {
+                  try {
+                      getPackageManager().getPackageInfo(packageName, 0);
+                      return true;
+                  } catch (Exception e) {
+                      return false;
+                  }
+              }
+
+              private Intent getLaunchIntentSafely(String packageName) {
+                  Intent i = getPackageManager().getLaunchIntentForPackage(packageName);
+                  if (i != null) return i;
+
+                  Intent testIntent = new Intent(Intent.ACTION_MAIN, null);
+                  testIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+                  testIntent.setPackage(packageName);
+
+                  List<ResolveInfo> list = getPackageManager().queryIntentActivities(testIntent, 0);
+                  if (list == null || list.isEmpty()) return null;
+
+                  String className = list.get(0).activityInfo.name;
+                  Intent fallback = new Intent(Intent.ACTION_MAIN);
+                  fallback.setClassName(packageName, className);
+                  return fallback;
+              }
+
               private void launchGame() {
                   if (games.isEmpty()) return;
+
                   GameItem g = games.get(selectedGame);
                   String[] cfg = Config.PLATFORMS[platformIdx];
                   String romPath = cfg[1] + "/" + g.file;
+                  File romFile = new File(romPath);
+
+                  if (!romFile.exists()) {
+                      toast("ملف اللعبة مش موجود");
+                      return;
+                  }
+
+                  String packageName = cfg[2];
+
+                  if (!isAppInstalled(packageName)) {
+                      toast("المحاكي مش متثبت: " + packageName);
+                      return;
+                  }
+
                   try {
-                      Intent i = getPackageManager().getLaunchIntentForPackage(cfg[2]);
-                      if (i == null) { toast("المحاكي مش موجود!"); return; }
-                      i.setData(Uri.fromFile(new File(romPath)));
+                      Intent i = getLaunchIntentSafely(packageName);
+
+                      if (i == null) {
+                          toast("المحاكي مش موجود: " + packageName);
+                          return;
+                      }
+
+                      Uri romUri = Uri.fromFile(romFile);
+
+                      i.setData(romUri);
                       i.putExtra("romPath", romPath);
-                      i.putExtra("com.epsxe.ePSXe.ROM", romPath);
+                      i.putExtra("path", romPath);
+                      i.putExtra(Intent.EXTRA_STREAM, romUri);
+
+                      if ("com.epsxe.ePSXe".equals(packageName)) {
+                          i.putExtra("com.epsxe.ePSXe.ROM", romPath);
+                          i.putExtra("ROM", romPath);
+                      }
+
+                      if ("org.ppsspp.ppsspp".equals(packageName)) {
+                          i.putExtra("org.ppsspp.ppsspp.Shortcuts", romPath);
+                          i.putExtra("GamePath", romPath);
+                      }
+
                       i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                       startActivity(i);
-                  } catch (Exception e) { toast("خطأ في التشغيل"); }
+
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                      toast("خطأ في تشغيل اللعبة");
+                  }
               }
 
               private void toast(String msg) {
                   Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
               }
 
+              private void refreshList() {
+                  ((GameAdapter) listView.getAdapter()).notifyDataSetChanged();
+                  listView.setSelection(selectedGame);
+              }
+
+              private void schedulePreview() {
+                  if (previewRunnable != null) handler.removeCallbacks(previewRunnable);
+
+                  previewRunnable = new Runnable() {
+                      @Override
+                      public void run() {
+                          updatePreview(true);
+                      }
+                  };
+
+                  handler.postDelayed(previewRunnable, 100);
+              }
+
               @Override
               public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = true;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = true;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
-                  if (startPressed && selectPressed) { finish(); finishAffinity(); return true; }
+
+                  if (startPressed && selectPressed) {
+                      finish();
+                      finishAffinity();
+                      return true;
+                  }
 
                   long now = System.currentTimeMillis();
-                  if (now - lastInput < INPUT_DELAY) return true;
+                  int repeat = event.getRepeatCount();
+
+                  int step = 1;
+                  if (repeat > 8) step = 4;
+                  else if (repeat > 4) step = 2;
 
                   switch (keyCode) {
                       case KeyEvent.KEYCODE_DPAD_UP:
+                          if (repeat == 0 && now - lastInput < INPUT_DELAY) return true;
                           if (selectedGame > 0) {
-                              lastInput=now; selectedGame--;
-                              ((GameAdapter)listView.getAdapter()).notifyDataSetChanged();
-                              listView.smoothScrollToPosition(selectedGame);
+                              lastInput = now;
+                              selectedGame = Math.max(0, selectedGame - step);
+                              refreshList();
                               schedulePreview();
-                          } return true;
+                          }
+                          return true;
+
                       case KeyEvent.KEYCODE_DPAD_DOWN:
-                          if (selectedGame < games.size()-1) {
-                              lastInput=now; selectedGame++;
-                              ((GameAdapter)listView.getAdapter()).notifyDataSetChanged();
-                              listView.smoothScrollToPosition(selectedGame);
+                          if (repeat == 0 && now - lastInput < INPUT_DELAY) return true;
+                          if (selectedGame < games.size() - 1) {
+                              lastInput = now;
+                              selectedGame = Math.min(games.size() - 1, selectedGame + step);
+                              refreshList();
                               schedulePreview();
-                          } return true;
+                          }
+                          return true;
+
                       case KeyEvent.KEYCODE_BUTTON_A:
                       case KeyEvent.KEYCODE_ENTER:
                       case KeyEvent.KEYCODE_DPAD_CENTER:
-                          lastInput=now; launchGame(); return true;
+                          lastInput = now;
+                          launchGame();
+                          return true;
+
                       case KeyEvent.KEYCODE_BUTTON_B:
                       case KeyEvent.KEYCODE_BACK:
                           finish();
                           overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
                           return true;
                   }
+
                   return super.onKeyDown(keyCode, event);
               }
 
               @Override
               public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = false;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
                   return super.onKeyUp(keyCode, event);
               }
@@ -740,31 +999,36 @@ jobs:
               @Override
               public boolean onGenericMotionEvent(MotionEvent event) {
                   if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
-                      && event.getAction() == MotionEvent.ACTION_MOVE) {
+                          && event.getAction() == MotionEvent.ACTION_MOVE) {
+
                       long now = System.currentTimeMillis();
-                      if (now - lastInput < INPUT_DELAY) return true;
+                      if (now - lastInput < JOYSTICK_DELAY) return true;
+
                       float y = event.getAxisValue(MotionEvent.AXIS_Y);
                       float hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-                      if (y < -0.5f || hatY < -0.5f) {
-                          if (selectedGame > 0) { lastInput=now; selectedGame--; refreshList(); schedulePreview(); }
-                      } else if (y > 0.5f || hatY > 0.5f) {
-                          if (selectedGame < games.size()-1) { lastInput=now; selectedGame++; refreshList(); schedulePreview(); }
+
+                      int step = 0;
+
+                      if (y < -0.9f || hatY < -0.9f) step = -4;
+                      else if (y < -0.5f || hatY < -0.5f) step = -2;
+                      else if (y > 0.9f || hatY > 0.9f) step = 4;
+                      else if (y > 0.5f || hatY > 0.5f) step = 2;
+
+                      if (step != 0 && !games.isEmpty()) {
+                          lastInput = now;
+                          selectedGame += step;
+
+                          if (selectedGame < 0) selectedGame = 0;
+                          if (selectedGame >= games.size()) selectedGame = games.size() - 1;
+
+                          refreshList();
+                          schedulePreview();
                       }
+
                       return true;
                   }
+
                   return super.onGenericMotionEvent(event);
-              }
-
-              private void refreshList() {
-                  ((GameAdapter)listView.getAdapter()).notifyDataSetChanged();
-                  listView.smoothScrollToPosition(selectedGame);
-              }
-
-              // Delay preview update while scrolling fast
-              private void schedulePreview() {
-                  if (previewRunnable != null) handler.removeCallbacks(previewRunnable);
-                  previewRunnable = () -> updatePreview(true);
-                  handler.postDelayed(previewRunnable, 120);
               }
 
               @Override
@@ -774,31 +1038,51 @@ jobs:
               }
 
               class GameAdapter extends BaseAdapter {
-                  @Override public int getCount() { return games.size(); }
-                  @Override public Object getItem(int p) { return games.get(p); }
-                  @Override public long getItemId(int p) { return p; }
-                  @Override public View getView(int pos, View cv, ViewGroup parent) {
-                      if (cv == null) cv = getLayoutInflater().inflate(R.layout.item_game, parent, false);
+                  @Override
+                  public int getCount() {
+                      return games.size();
+                  }
+
+                  @Override
+                  public Object getItem(int p) {
+                      return games.get(p);
+                  }
+
+                  @Override
+                  public long getItemId(int p) {
+                      return p;
+                  }
+
+                  @Override
+                  public View getView(int pos, View cv, ViewGroup parent) {
+                      if (cv == null) {
+                          cv = getLayoutInflater().inflate(R.layout.item_game, parent, false);
+                      }
+
                       GameItem g = games.get(pos);
-                      TextView num  = cv.findViewById(R.id.gameNum);
+
+                      TextView num = cv.findViewById(R.id.gameNum);
                       TextView name = cv.findViewById(R.id.gameName);
-                      num.setText(String.format("%02d", pos+1));
+
+                      num.setText(String.format("%02d", pos + 1));
                       name.setText(g.name);
+
                       boolean sel = (pos == selectedGame);
+
                       if (sel) {
                           cv.setBackgroundColor(0xff1a1a35);
                           name.setTextColor(0xffffffff);
                           name.setTextSize(16f);
                           num.setTextColor(0xff7c5cbf);
-                          // left border via padding
-                          cv.setPadding(20,16,16,16);
+                          cv.setPadding(20, 16, 16, 16);
                       } else {
                           cv.setBackgroundColor(0x00000000);
                           name.setTextColor(0xff7788aa);
                           name.setTextSize(14f);
                           num.setTextColor(0xff334060);
-                          cv.setPadding(24,16,16,16);
+                          cv.setPadding(24, 16, 16, 16);
                       }
+
                       return cv;
                   }
               }
