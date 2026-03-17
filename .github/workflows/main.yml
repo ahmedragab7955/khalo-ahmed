@@ -48,10 +48,10 @@ jobs:
           plugins { id 'com.android.application' }
           android {
               namespace 'com.khaloahmed.launcher'
-              compileSdk 33
+              compileSdk 34
               defaultConfig {
                   applicationId "com.khaloahmed.launcher"
-                  minSdk 21; targetSdk 33
+                  minSdk 21; targetSdk 34
                   versionCode 1; versionName "1.0"
               }
               buildTypes {
@@ -74,11 +74,15 @@ jobs:
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
               package="com.khaloahmed.launcher">
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+              <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage"/>
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
               <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
               <uses-feature android:name="android.software.leanback" android:required="false"/>
               <application android:allowBackup="true" android:label="Khalo Ahmed"
+                  android:requestLegacyExternalStorage="true"
                   android:theme="@style/Theme.KhaloAhmed">
                   <activity android:name=".MainActivity" android:exported="true"
                       android:configChanges="orientation|keyboardHidden|screenSize"
@@ -101,6 +105,7 @@ jobs:
           import android.content.Intent;
           import android.net.Uri;
           import android.os.Bundle;
+          import android.os.Environment;
           import android.webkit.*;
           import android.view.*;
           import org.json.*;
@@ -141,7 +146,7 @@ jobs:
                               String b=nm.contains(".")?nm.substring(0,nm.lastIndexOf('.')):nm;
                               JSONObject o=new JSONObject();o.put("name",b.replaceAll("[_\\-]"," ").trim());
                               o.put("platform",pl);o.put("file",nm);o.put("path",f.getAbsolutePath());
-                              o.put("art",arts.getOrDefault(b.toLowerCase(),""));g.put(o);}
+                              o.put("art",arts.containsKey(b.toLowerCase())?arts.get(b.toLowerCase()):"");g.put(o);}
                       }}catch(Exception e){e.printStackTrace();}
                       return g.toString();
                   }
@@ -150,6 +155,12 @@ jobs:
                           i.setData(Uri.fromFile(new File(rom)));i.putExtra("romPath",rom);
                           i.putExtra("com.epsxe.ePSXe.ROM",rom);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);
                       }catch(Exception e){e.printStackTrace();}
+                  }
+                  @JavascriptInterface public void requestPermission(){
+                      if(android.os.Build.VERSION.SDK_INT>=30){
+                          Intent i=new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);
+                      }
                   }
               }
               @Override public void onBackPressed(){webView.evaluateJavascript("if(document.getElementById('nowPlaying').classList.contains('show')){closeNowPlaying();}",null);}
@@ -199,38 +210,90 @@ jobs:
           .np-hint{font-size:.8rem;color:var(--dim);margin-top:10px;}
           .hint-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 40px;background:linear-gradient(0deg,var(--bg),transparent);display:flex;gap:24px;font-size:.7rem;color:var(--dim);font-family:'Orbitron',monospace;}
           .hint-key{background:var(--card);border:1px solid rgba(255,255,255,.1);padding:2px 8px;border-radius:4px;margin-left:6px;}
+          .perm-banner{background:#ff4444;color:white;padding:12px 40px;font-size:.85rem;cursor:pointer;text-align:center;}
           </style></head><body>
+          <div class="perm-banner" id="permBanner" style="display:none" onclick="requestPerm()">⚠️ اضغط هنا للسماح بالوصول للملفات</div>
           <header><div class="logo">KHALO AHMED</div><div class="clock" id="clock">00:00</div></header>
           <div class="tabs"><button class="tab active" data-platform="ALL">ALL</button><button class="tab" data-platform="PS1">PS1</button><button class="tab" data-platform="PSP">PSP</button><button class="tab" data-platform="GBC">GBC</button></div>
           <div class="search-wrap"><input class="search-bar" id="searchBar" type="text" placeholder="🔍 ابحث عن لعبة..."></div>
           <div class="stats" id="stats"></div><div class="section-title" id="sectionTitle">ALL GAMES</div>
           <div class="games-grid" id="gamesGrid"></div>
-          <div class="now-playing" id="nowPlaying"><div class="np-art"><img id="npArt" src="" alt=""></div><div class="np-title" id="npTitle"></div><div class="np-platform" id="npPlatform"></div><div class="np-hint">اضغط OK للتشغيل • BACK للرجوع</div></div>
-          <div class="hint-bar"><span><span class="hint-key">D-PAD</span> تنقل</span><span><span class="hint-key">OK</span> تشغيل</span><span><span class="hint-key">BACK</span> رجوع</span></div>
+          <div class="now-playing" id="nowPlaying"><div class="np-art"><img id="npArt" src="" alt=""></div><div class="np-title" id="npTitle"></div><div class="np-platform" id="npPlatform"></div><div class="np-hint">اضغط A للتشغيل • B للرجوع</div></div>
+          <div class="hint-bar"><span><span class="hint-key">D-PAD</span> تنقل</span><span><span class="hint-key">A</span> تشغيل</span><span><span class="hint-key">B</span> رجوع</span></div>
           <script>
           const PL={PS1:{path:'/storage/0CF6-106E/ps1',emu:'com.epsxe.ePSXe',icon:'🎮'},PSP:{path:'/storage/0CF6-106E/psp',emu:'org.ppsspp.ppsspp',icon:'🕹️'},GBC:{path:'/storage/0CF6-106E/gbc',emu:'com.fastemulator.gbcfree',icon:'👾'}};
-          const DEMO=[{name:'Final Fantasy VII',platform:'PS1',file:'ff7.bin',art:''},{name:'Crash Bandicoot',platform:'PS1',file:'crash.bin',art:''},{name:'God of War',platform:'PSP',file:'gow.iso',art:''},{name:'Pokemon Red',platform:'GBC',file:'pokered.gbc',art:''}];
-          let all=[],filtered=[],cur='ALL',fi=0,fz='grid',npG=null;
-          function init(){try{all=window.Android?JSON.parse(window.Android.getGamesList()):DEMO;}catch(e){all=DEMO;}filterRender();updateClock();setInterval(updateClock,1000);setupKeys();}
+          const DEMO=[{name:'الألعاب مش ظاهرة',platform:'PS1',file:'',art:''},{name:'اضغط البانر الأحمر',platform:'PS1',file:'',art:''}];
+          let all=[],filtered=[],cur='ALL',fi=0,fz='grid',npG=null,gpInterval=null,lastGpTime=0;
+
+          function requestPerm(){if(window.Android&&window.Android.requestPermission){window.Android.requestPermission();setTimeout(()=>loadGames(),3000);}}
+
+          function init(){loadGames();updateClock();setInterval(updateClock,1000);setupKeys();setupGamepad();}
+
+          function loadGames(){
+            try{
+              if(window.Android&&window.Android.getGamesList){
+                const list=JSON.parse(window.Android.getGamesList());
+                if(list.length>0){all=list;document.getElementById('permBanner').style.display='none';}
+                else{all=DEMO;document.getElementById('permBanner').style.display='block';}
+              }else{all=DEMO;}
+            }catch(e){all=DEMO;}
+            filterRender();
+          }
+
           function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
           function filterRender(){const s=document.getElementById('searchBar').value.toLowerCase();filtered=all.filter(g=>(cur==='ALL'||g.platform===cur)&&(!s||g.name.toLowerCase().includes(s)));document.getElementById('sectionTitle').textContent=(cur==='ALL'?'ALL':cur)+' GAMES';document.getElementById('stats').textContent=filtered.length+' GAMES';renderGrid();}
           function renderGrid(){const g=document.getElementById('gamesGrid');if(!filtered.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--dim);font-family:Orbitron,monospace">NO GAMES</div>';return;}
           g.innerHTML=filtered.map((gm,i)=>{const p=PL[gm.platform]||{icon:'🎮'};const a=gm.art?'file://'+gm.art:'';
           return`<div class="game-card ${i===fi&&fz==='grid'?'focused':''}" onclick="selectGame(${i})"><div class="game-art">${a?`<img src="${a}" onerror="this.parentElement.innerHTML='<div class=no-art>${p.icon}<span>NO ART</span></div>'">`:`<div class="no-art">${p.icon}<span>NO ART</span></div>`}<div class="platform-badge badge-${gm.platform}">${gm.platform}</div></div><div class="card-info"><div class="card-title">${gm.name}</div><div class="card-platform">${gm.platform}</div></div></div>`;}).join('');}
-          function selectGame(i){npG=filtered[i];if(!npG)return;document.getElementById('npTitle').textContent=npG.name;document.getElementById('npPlatform').textContent=npG.platform+' • '+npG.file;document.getElementById('npArt').src=npG.art?'file://'+npG.art:'';document.getElementById('nowPlaying').classList.add('show');}
+
+          function selectGame(i){npG=filtered[i];if(!npG||!npG.file)return;document.getElementById('npTitle').textContent=npG.name;document.getElementById('npPlatform').textContent=npG.platform+' • '+npG.file;document.getElementById('npArt').src=npG.art?'file://'+npG.art:'';document.getElementById('nowPlaying').classList.add('show');}
           function closeNowPlaying(){document.getElementById('nowPlaying').classList.remove('show');npG=null;}
-          function launchGame(){if(!npG)return;const p=PL[npG.platform];if(window.Android)window.Android.launchGame(p.emu,p.path+'/'+npG.file);}
-          function setupKeys(){document.addEventListener('keydown',handleKey);document.getElementById('searchBar').addEventListener('input',()=>{fi=0;filterRender();});document.getElementById('searchBar').addEventListener('focus',()=>{fz='search';renderGrid();});}
+          function launchGame(){if(!npG||!npG.file)return;const p=PL[npG.platform];if(window.Android)window.Android.launchGame(p.emu,p.path+'/'+npG.file);}
+
+          function setupKeys(){
+            document.addEventListener('keydown',handleKey);
+            document.getElementById('searchBar').addEventListener('input',()=>{fi=0;filterRender();});
+            document.getElementById('searchBar').addEventListener('focus',()=>{fz='search';renderGrid();});
+          }
+
+          function setupGamepad(){
+            window.addEventListener('gamepadconnected',function(e){
+              if(gpInterval)clearInterval(gpInterval);
+              gpInterval=setInterval(function(){
+                const gp=navigator.getGamepads()[e.gamepad.index];
+                if(!gp)return;
+                const now=Date.now();
+                if(now-lastGpTime<180)return;
+                // D-Pad buttons (buttons 12-15)
+                if(gp.buttons[12]&&gp.buttons[12].pressed){lastGpTime=now;handleKey({key:'ArrowUp',preventDefault:()=>{}});}
+                else if(gp.buttons[13]&&gp.buttons[13].pressed){lastGpTime=now;handleKey({key:'ArrowDown',preventDefault:()=>{}});}
+                else if(gp.buttons[14]&&gp.buttons[14].pressed){lastGpTime=now;handleKey({key:'ArrowLeft',preventDefault:()=>{}});}
+                else if(gp.buttons[15]&&gp.buttons[15].pressed){lastGpTime=now;handleKey({key:'ArrowRight',preventDefault:()=>{}});}
+                // Analog stick
+                else if(gp.axes[0]<-0.5){lastGpTime=now;handleKey({key:'ArrowRight',preventDefault:()=>{}});}
+                else if(gp.axes[0]>0.5){lastGpTime=now;handleKey({key:'ArrowLeft',preventDefault:()=>{}});}
+                else if(gp.axes[1]<-0.5){lastGpTime=now;handleKey({key:'ArrowUp',preventDefault:()=>{}});}
+                else if(gp.axes[1]>0.5){lastGpTime=now;handleKey({key:'ArrowDown',preventDefault:()=>{}});}
+                // A button=0, B button=1
+                if(gp.buttons[0]&&gp.buttons[0].pressed){lastGpTime=now;handleKey({key:'Enter',preventDefault:()=>{}});}
+                else if(gp.buttons[1]&&gp.buttons[1].pressed){lastGpTime=now;handleKey({key:'Escape',preventDefault:()=>{}});}
+              },50);
+            });
+          }
+
           function getGridCols(){return window.getComputedStyle(document.getElementById('gamesGrid')).gridTemplateColumns.split(' ').length||5;}
-          function handleKey(e){const np=document.getElementById('nowPlaying').classList.contains('show');
-          if(np){if(e.key==='Enter'||e.key===' ')launchGame();else if(e.key==='Escape'||e.keyCode===4)closeNowPlaying();return;}
-          const c=getGridCols();
-          if(e.key==='ArrowRight'){fi=Math.max(0,fi-1);renderGrid();e.preventDefault();}
-          else if(e.key==='ArrowLeft'){fi=Math.min(filtered.length-1,fi+1);renderGrid();e.preventDefault();}
-          else if(e.key==='ArrowDown'){if(fz==='tabs'||fz==='search'){fz='grid';document.getElementById('searchBar').blur();renderGrid();}else{fi=Math.min(filtered.length-1,fi+c);renderGrid();}e.preventDefault();}
-          else if(e.key==='ArrowUp'){if(fz==='grid'&&fi<c){fz='search';document.getElementById('searchBar').focus();}else if(fz==='grid'){fi=Math.max(0,fi-c);renderGrid();}e.preventDefault();}
-          else if(e.key==='Enter'||e.key===' '){if(fz==='grid')selectGame(fi);e.preventDefault();}
-          const card=document.querySelector('.game-card.focused');if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+          function handleKey(e){
+            const np=document.getElementById('nowPlaying').classList.contains('show');
+            if(np){if(e.key==='Enter'||e.key===' ')launchGame();else if(e.key==='Escape'||e.keyCode===4)closeNowPlaying();return;}
+            const c=getGridCols();
+            if(e.key==='ArrowRight'){if(fz==='tabs')moveFocusTab(-1);else{fi=Math.max(0,fi-1);renderGrid();}e.preventDefault();}
+            else if(e.key==='ArrowLeft'){if(fz==='tabs')moveFocusTab(1);else{fi=Math.min(filtered.length-1,fi+1);renderGrid();}e.preventDefault();}
+            else if(e.key==='ArrowDown'){if(fz==='tabs'||fz==='search'){fz='grid';document.getElementById('searchBar').blur();renderGrid();}else{fi=Math.min(filtered.length-1,fi+c);renderGrid();}e.preventDefault();}
+            else if(e.key==='ArrowUp'){if(fz==='grid'&&fi<c){fz='search';document.getElementById('searchBar').focus();}else if(fz==='grid'){fi=Math.max(0,fi-c);renderGrid();}e.preventDefault();}
+            else if(e.key==='Enter'||e.key===' '){if(fz==='grid')selectGame(fi);e.preventDefault();}
+            const card=document.querySelector('.game-card.focused');if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});
+          }
+          function moveFocusTab(d){const tabs=document.querySelectorAll('.tab');const ai=Array.from(tabs).findIndex(t=>t.classList.contains('active'));tabs[Math.max(0,Math.min(tabs.length-1,ai+d))].click();}
           document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{cur=t.dataset.platform;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');fi=0;fz='grid';filterRender();}));
           init();
           </script></body></html>
