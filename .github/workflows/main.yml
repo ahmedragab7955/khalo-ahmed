@@ -60,8 +60,8 @@ jobs:
                   applicationId "com.khaloahmed.launcher"
                   minSdk 21
                   targetSdk 34
-                  versionCode 3
-                  versionName "3.0"
+                  versionCode 4
+                  versionName "4.0"
               }
               buildTypes {
                   release {
@@ -133,21 +133,22 @@ jobs:
           </manifest>
           EOF
 
+          # ── PlayStation Blue + White color palette ──
           cat > app/src/main/res/values/colors.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <color name="bg_dark">#08080f</color>
-              <color name="bg_card">#0f0f23</color>
-              <color name="bg_left">#0b0b1a</color>
-              <color name="accent">#7c5cbf</color>
-              <color name="accent2">#4477ff</color>
-              <color name="gold">#f0c040</color>
-              <color name="neon">#00cfff</color>
+              <color name="bg_dark">#0a0e1a</color>
+              <color name="bg_card">#0d1526</color>
+              <color name="bg_left">#0b1120</color>
+              <color name="accent">#0070d1</color>
+              <color name="accent2">#003087</color>
+              <color name="gold">#00a8e0</color>
+              <color name="neon">#00c8ff</color>
               <color name="recent_color">#ff6b35</color>
               <color name="text_white">#ffffff</color>
-              <color name="text_dim">#445070</color>
-              <color name="selected_bg">#16163a</color>
-              <color name="divider">#0d0d20</color>
+              <color name="text_dim">#3a5080</color>
+              <color name="selected_bg">#0d1e3a</color>
+              <color name="divider">#0a1020</color>
           </resources>
           EOF
 
@@ -561,7 +562,7 @@ jobs:
                       android:textSize="9sp"
                       android:textStyle="bold"
                       android:fontFamily="monospace"
-                      android:background="#cc4477ff"/>
+                      android:background="#cc0070d1"/>
 
                   <TextView
                       android:id="@+id/recentPreviewTitle"
@@ -808,6 +809,185 @@ jobs:
           }
           EOF
 
+          # ── ExitDialog: shown when START+SELECT pressed inside a game screen ──
+          cat > app/src/main/java/com/khaloahmed/launcher/ExitDialog.java << 'EOF'
+          package com.khaloahmed.launcher;
+
+          import android.app.Activity;
+          import android.app.AlertDialog;
+          import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.graphics.drawable.GradientDrawable;
+          import android.view.Gravity;
+          import android.view.KeyEvent;
+          import android.view.View;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+
+          /**
+           * Custom exit confirmation dialog with PlayStation-style design.
+           * Two options: "متابعة اللعبة" (continue) and "خروج" (exit).
+           * Navigated with D-Pad Left/Right; confirmed with A/Enter/DPad-Center.
+           */
+          public class ExitDialog {
+
+              public interface ExitCallback {
+                  void onExit();
+              }
+
+              private AlertDialog dialog;
+              private int selected = 0; // 0 = continue, 1 = exit
+              private TextView btnContinue, btnExit;
+              private final Activity activity;
+              private final ExitCallback callback;
+
+              public ExitDialog(Activity activity, ExitCallback callback) {
+                  this.activity = activity;
+                  this.callback = callback;
+              }
+
+              public void show() {
+                  LinearLayout root = new LinearLayout(activity);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setGravity(Gravity.CENTER);
+                  root.setPadding(48, 40, 48, 32);
+
+                  GradientDrawable bg = new GradientDrawable();
+                  bg.setColor(0xff0d1526);
+                  bg.setCornerRadius(28f);
+                  bg.setStroke(2, 0xff0070d1);
+                  root.setBackground(bg);
+
+                  TextView title = new TextView(activity);
+                  title.setText("⚠  هل تريد الخروج؟");
+                  title.setTextColor(0xffffffff);
+                  title.setTextSize(16f);
+                  title.setTypeface(Typeface.DEFAULT_BOLD);
+                  title.setGravity(Gravity.CENTER);
+                  title.setPadding(0, 0, 0, 8);
+                  root.addView(title);
+
+                  TextView sub = new TextView(activity);
+                  sub.setText("سيتم إغلاق التطبيق بالكامل");
+                  sub.setTextColor(0xff3a5080);
+                  sub.setTextSize(11f);
+                  sub.setGravity(Gravity.CENTER);
+                  sub.setPadding(0, 0, 0, 28);
+                  root.addView(sub);
+
+                  LinearLayout btnRow = new LinearLayout(activity);
+                  btnRow.setOrientation(LinearLayout.HORIZONTAL);
+                  btnRow.setGravity(Gravity.CENTER);
+
+                  btnContinue = makeBtn("متابعة اللعبة", false);
+                  btnExit     = makeBtn("خروج", true);
+
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                          LinearLayout.LayoutParams.WRAP_CONTENT,
+                          LinearLayout.LayoutParams.WRAP_CONTENT);
+                  lp.setMargins(0, 0, 20, 0);
+                  btnContinue.setLayoutParams(lp);
+
+                  btnRow.addView(btnContinue);
+                  btnRow.addView(btnExit);
+                  root.addView(btnRow);
+
+                  highlightSelected();
+
+                  AlertDialog.Builder builder = new AlertDialog.Builder(activity, android.R.style.Theme_Material_Dialog_Alert);
+                  builder.setView(root);
+                  builder.setCancelable(true);
+
+                  dialog = builder.create();
+                  if (dialog.getWindow() != null) {
+                      dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                  }
+
+                  // Handle controller input inside dialog
+                  dialog.setOnKeyListener((dlg, keyCode, event) -> {
+                      if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+                      switch (keyCode) {
+                          case KeyEvent.KEYCODE_DPAD_LEFT:
+                              selected = 0; highlightSelected(); return true;
+                          case KeyEvent.KEYCODE_DPAD_RIGHT:
+                              selected = 1; highlightSelected(); return true;
+                          case KeyEvent.KEYCODE_BUTTON_A:
+                          case KeyEvent.KEYCODE_ENTER:
+                          case KeyEvent.KEYCODE_DPAD_CENTER:
+                              confirm(); return true;
+                          case KeyEvent.KEYCODE_BACK:
+                          case KeyEvent.KEYCODE_BUTTON_B:
+                              dialog.dismiss(); return true;
+                          // If user presses START+SELECT again, exit immediately
+                          case KeyEvent.KEYCODE_BUTTON_START:
+                          case KeyEvent.KEYCODE_BUTTON_SELECT:
+                              dialog.dismiss();
+                              callback.onExit();
+                              return true;
+                      }
+                      return false;
+                  });
+
+                  dialog.show();
+              }
+
+              private TextView makeBtn(String label, boolean isExit) {
+                  TextView tv = new TextView(activity);
+                  tv.setText(label);
+                  tv.setTextSize(14f);
+                  tv.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+                  tv.setPadding(32, 18, 32, 18);
+                  tv.setGravity(Gravity.CENTER);
+                  tv.setOnClickListener(v -> {
+                      selected = isExit ? 1 : 0;
+                      confirm();
+                  });
+                  return tv;
+              }
+
+              private void highlightSelected() {
+                  // Continue button
+                  GradientDrawable gdC = new GradientDrawable();
+                  gdC.setCornerRadius(18f);
+                  if (selected == 0) {
+                      gdC.setColor(0xff003087);
+                      gdC.setStroke(2, 0xff0070d1);
+                      btnContinue.setTextColor(0xffffffff);
+                  } else {
+                      gdC.setColor(0xff0a1020);
+                      gdC.setStroke(1, 0xff1a2540);
+                      btnContinue.setTextColor(0xff3a5080);
+                  }
+                  btnContinue.setBackground(gdC);
+
+                  // Exit button
+                  GradientDrawable gdE = new GradientDrawable();
+                  gdE.setCornerRadius(18f);
+                  if (selected == 1) {
+                      gdE.setColor(0xff3a0a00);
+                      gdE.setStroke(2, 0xffff4444);
+                      btnExit.setTextColor(0xffff6666);
+                  } else {
+                      gdE.setColor(0xff0a1020);
+                      gdE.setStroke(1, 0xff1a2540);
+                      btnExit.setTextColor(0xff3a5080);
+                  }
+                  btnExit.setBackground(gdE);
+              }
+
+              private void confirm() {
+                  dialog.dismiss();
+                  if (selected == 1) {
+                      callback.onExit();
+                  }
+              }
+
+              public boolean isShowing() {
+                  return dialog != null && dialog.isShowing();
+              }
+          }
+          EOF
+
           cat > app/src/main/java/com/khaloahmed/launcher/PlatformActivity.java << 'EOF'
           package com.khaloahmed.launcher;
 
@@ -864,6 +1044,7 @@ jobs:
                   updateRecentStrip();
               }
 
+              // PlayStation blue palette for platform cards
               private LinearLayout buildPlatformCard(String[] p, boolean sel, int idx, boolean animate) {
                   int sz = sel ? 230 : 195;
                   LinearLayout card = new LinearLayout(this);
@@ -872,13 +1053,27 @@ jobs:
                   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(sz, sz);
                   lp.setMargins(22, 0, 22, 0); card.setLayoutParams(lp); card.setPadding(12,12,12,12);
                   GradientDrawable gd = new GradientDrawable(); gd.setCornerRadius(26f);
-                  if (sel) { gd.setColor(0xff16163a); gd.setStroke(3,0xff7c5cbf); card.setBackground(gd); card.setElevation(28f); card.setAlpha(1f); }
-                  else { gd.setColor(0xff0f0f23); gd.setStroke(1,0xff1a1a35); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.4f); }
-                  TextView icon = new TextView(this); icon.setText(p[4]); icon.setTextSize(sel?44:34); icon.setGravity(Gravity.CENTER); card.addView(icon);
-                  TextView name = new TextView(this); name.setText(p[0]); name.setTextSize(sel?15:12); name.setTextColor(sel?0xfff0c040:0xff445070);
-                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.18f); name.setPadding(0,6,0,0); card.addView(name);
-                  TextView count = new TextView(this); count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(9); count.setTextColor(sel?0xff7c5cbf:0xff2a2a45);
-                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
+                  if (sel) {
+                      gd.setColor(0xff0d1e3a); gd.setStroke(3, 0xff0070d1);
+                      card.setBackground(gd); card.setElevation(28f); card.setAlpha(1f);
+                  } else {
+                      gd.setColor(0xff0d1526); gd.setStroke(1, 0xff0d1f38);
+                      card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.45f);
+                  }
+                  TextView icon = new TextView(this);
+                  icon.setText(p[4]); icon.setTextSize(sel?44:34); icon.setGravity(Gravity.CENTER);
+                  card.addView(icon);
+                  TextView name = new TextView(this);
+                  name.setText(p[0]); name.setTextSize(sel?15:12);
+                  name.setTextColor(sel ? 0xff00c8ff : 0xff1a3a5a);
+                  name.setGravity(Gravity.CENTER);
+                  name.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+                  name.setLetterSpacing(0.18f); name.setPadding(0,6,0,0); card.addView(name);
+                  TextView count = new TextView(this);
+                  count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(9);
+                  count.setTextColor(sel ? 0xff0070d1 : 0xff0d2040);
+                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE);
+                  count.setPadding(0,3,0,0); card.addView(count);
                   final int i = idx; card.setOnClickListener(v -> openPlatform(i));
                   if (sel && animate) card.startAnimation(AnimationUtils.loadAnimation(this, R.anim.pop_in));
                   return card;
@@ -891,13 +1086,20 @@ jobs:
                   LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(sz, sz);
                   lp.setMargins(22,0,22,0); card.setLayoutParams(lp); card.setPadding(12,12,12,12);
                   GradientDrawable gd = new GradientDrawable(); gd.setCornerRadius(26f);
-                  if (sel) { gd.setColor(0xff1f0f0f); gd.setStroke(3,0xffff6b35); card.setBackground(gd); card.setElevation(28f); card.setAlpha(1f); }
-                  else { gd.setColor(0xff130a05); gd.setStroke(1,0xff2a1408); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.4f); }
+                  if (sel) {
+                      gd.setColor(0xff1f0f0f); gd.setStroke(3,0xffff6b35);
+                      card.setBackground(gd); card.setElevation(28f); card.setAlpha(1f);
+                  } else {
+                      gd.setColor(0xff130a05); gd.setStroke(1,0xff2a1408);
+                      card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.45f);
+                  }
                   TextView icon = new TextView(this); icon.setText("🕐"); icon.setTextSize(sel?44:34); icon.setGravity(Gravity.CENTER); card.addView(icon);
-                  TextView name = new TextView(this); name.setText("RECENT"); name.setTextSize(sel?15:12); name.setTextColor(sel?0xffff6b35:0xff442a18);
+                  TextView name = new TextView(this); name.setText("RECENT"); name.setTextSize(sel?15:12);
+                  name.setTextColor(sel?0xffff6b35:0xff442a18);
                   name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.18f); name.setPadding(0,6,0,0); card.addView(name);
                   List<RecentEntry> r = RecentStore.load(this);
-                  TextView count = new TextView(this); count.setText(r.size()+" GAMES"); count.setTextSize(9); count.setTextColor(sel?0xffff6b35:0xff2a1408);
+                  TextView count = new TextView(this); count.setText(r.size()+" GAMES"); count.setTextSize(9);
+                  count.setTextColor(sel?0xffff6b35:0xff2a1408);
                   count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
                   card.setOnClickListener(v -> openRecent());
                   if (sel && animate) card.startAnimation(AnimationUtils.loadAnimation(this, R.anim.pop_in));
@@ -917,9 +1119,10 @@ jobs:
                       RecentEntry e = recent.get(i);
                       TextView chip = new TextView(this);
                       chip.setText(getPlatformIcon(e.platform) + "  " + e.name);
-                      chip.setTextColor(Color.parseColor("#cccccc")); chip.setTextSize(11f);
+                      chip.setTextColor(Color.parseColor("#ccddff")); chip.setTextSize(11f);
                       chip.setMaxLines(1); chip.setEllipsize(android.text.TextUtils.TruncateAt.END); chip.setSingleLine(true);
-                      GradientDrawable bg = new GradientDrawable(); bg.setCornerRadius(18f); bg.setColor(0xff1a0d07); bg.setStroke(1,0xff4a2510);
+                      GradientDrawable bg = new GradientDrawable(); bg.setCornerRadius(18f);
+                      bg.setColor(0xff0a1525); bg.setStroke(1,0xff0d2545);
                       chip.setBackground(bg); chip.setPadding(18,8,18,8); chip.setMaxWidth(260);
                       LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                       lp.setMargins(0,0,10,0); chip.setLayoutParams(lp);
@@ -957,8 +1160,9 @@ jobs:
 
               @Override
               public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = true;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = true;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
+                  // START+SELECT on home screen → just finish (no emulator open, safe)
                   if (startPressed && selectPressed) { finish(); return true; }
                   switch (keyCode) {
                       case KeyEvent.KEYCODE_DPAD_LEFT:
@@ -972,7 +1176,7 @@ jobs:
                   return super.onKeyDown(keyCode, event);
               }
               @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START) startPressed = false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = false;
                   if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
                   return super.onKeyUp(keyCode, event);
               }
@@ -990,6 +1194,7 @@ jobs:
           }
           EOF
 
+          # ── GamesActivity: fast scroll + START+SELECT dialog + PS1 multi-try launch ──
           cat > app/src/main/java/com/khaloahmed/launcher/GamesActivity.java << 'EOF'
           package com.khaloahmed.launcher;
 
@@ -1009,7 +1214,6 @@ jobs:
           import android.view.ViewGroup;
           import android.view.WindowManager;
           import android.view.animation.AnimationUtils;
-          import android.widget.AdapterView;
           import android.widget.BaseAdapter;
           import android.widget.ImageView;
           import android.widget.ListView;
@@ -1019,6 +1223,20 @@ jobs:
           import java.util.List;
 
           public class GamesActivity extends Activity {
+
+              // ── Fast scroll timing ──
+              // repeatCount thresholds control acceleration when holding a button.
+              // The OS fires key-repeat events starting at ~500ms, then every ~50ms.
+              // We compute our own timing via System.currentTimeMillis().
+              private static final long DELAY_FIRST  = 0;    // first press: immediate
+              private static final long DELAY_SLOW   = 220;  // held < 600ms
+              private static final long DELAY_MEDIUM = 90;   // held 600ms–1.5s
+              private static final long DELAY_FAST   = 35;   // held > 1.5s
+
+              private long holdStart = 0;   // when current direction was first pressed
+              private boolean holding  = false;
+              private int     holdDir  = 0; // -1 = up, +1 = down
+
               private int platformIdx;
               private List<GameItem> games;
               private int selectedGame = 0;
@@ -1028,13 +1246,11 @@ jobs:
               private TextView noArtIcon, previewTitle, platformName, gameCount, lastPlayedBadge;
               private Handler handler = new Handler();
               private Runnable previewRunnable;
+              private Runnable scrollRunnable;
               private Thread imageThread;
               private long lastInput = 0;
               private String lastPlayedFile = "";
-
-              private long scrollDelay(int r) {
-                  if (r==0) return 160; if (r<4) return 110; if (r<10) return 65; if (r<20) return 38; return 22;
-              }
+              private ExitDialog exitDialog;
 
               @Override protected void onCreate(Bundle s) {
                   super.onCreate(s);
@@ -1045,21 +1261,32 @@ jobs:
                   platformIdx = getIntent().getIntExtra("platformIdx", 0);
                   String[] cfg = Config.PLATFORMS[platformIdx];
                   games = GameScanner.scan(cfg[0]);
-                  listView = findViewById(R.id.gameList); previewImg = findViewById(R.id.previewImg);
-                  previewBg = findViewById(R.id.previewBg); noArtIcon = findViewById(R.id.noArtIcon);
-                  previewTitle = findViewById(R.id.previewTitle); platformName = findViewById(R.id.platformName);
-                  gameCount = findViewById(R.id.gameCount); lastPlayedBadge = findViewById(R.id.lastPlayedBadge);
-                  platformName.setText(cfg[0]); gameCount.setText(games.size() + " GAMES");
+                  listView      = findViewById(R.id.gameList);
+                  previewImg    = findViewById(R.id.previewImg);
+                  previewBg     = findViewById(R.id.previewBg);
+                  noArtIcon     = findViewById(R.id.noArtIcon);
+                  previewTitle  = findViewById(R.id.previewTitle);
+                  platformName  = findViewById(R.id.platformName);
+                  gameCount     = findViewById(R.id.gameCount);
+                  lastPlayedBadge = findViewById(R.id.lastPlayedBadge);
+                  platformName.setText(cfg[0]);
+                  gameCount.setText(games.size() + " GAMES");
                   List<RecentEntry> recents = RecentStore.load(this);
                   for (RecentEntry e : recents) { if (e.platform.equals(cfg[0])) { lastPlayedFile = e.file; break; } }
                   String jumpTo = getIntent().getStringExtra("jumpToFile");
                   if (jumpTo != null) { for (int i=0; i<games.size(); i++) { if (games.get(i).file.equals(jumpTo)) { selectedGame=i; break; } } }
-                  setupList(); updatePreview(false);
+                  setupList();
+                  updatePreview(false);
               }
 
               private void setupList() {
-                  GameAdapter adapter = new GameAdapter(); listView.setAdapter(adapter); listView.setSelection(selectedGame);
-                  listView.setOnItemClickListener((p,v,pos,id) -> { selectedGame=pos; adapter.notifyDataSetChanged(); listView.setSelection(pos); updatePreview(true); });
+                  GameAdapter adapter = new GameAdapter();
+                  listView.setAdapter(adapter);
+                  listView.setSelection(selectedGame);
+                  listView.setOnItemClickListener((p,v,pos,id) -> {
+                      selectedGame = pos; adapter.notifyDataSetChanged();
+                      listView.setSelection(pos); updatePreview(true);
+                  });
               }
 
               private void updatePreview(boolean animate) {
@@ -1087,36 +1314,133 @@ jobs:
 
               private void schedulePreview() {
                   if (previewRunnable != null) handler.removeCallbacks(previewRunnable);
-                  previewRunnable = () -> updatePreview(true); handler.postDelayed(previewRunnable, 90);
+                  previewRunnable = () -> updatePreview(true);
+                  handler.postDelayed(previewRunnable, 80);
               }
 
-              private boolean isInstalled(String pkg) { try { getPackageManager().getPackageInfo(pkg,0); return true; } catch(Exception e){return false;} }
+              // ── Continuous scroll loop (runs on UI thread via Handler) ──
+              private void startScrollLoop(int dir) {
+                  holdDir = dir;
+                  holding = true;
+                  holdStart = System.currentTimeMillis();
+                  if (scrollRunnable != null) handler.removeCallbacks(scrollRunnable);
+                  scrollRunnable = new Runnable() {
+                      @Override public void run() {
+                          if (!holding || holdDir != dir) return;
+                          long elapsed = System.currentTimeMillis() - holdStart;
+                          long delay;
+                          if (elapsed < 600)       delay = DELAY_SLOW;
+                          else if (elapsed < 1500) delay = DELAY_MEDIUM;
+                          else                     delay = DELAY_FAST;
+                          boolean moved = false;
+                          if (dir < 0 && selectedGame > 0)              { selectedGame--; moved = true; }
+                          else if (dir > 0 && selectedGame < games.size()-1) { selectedGame++; moved = true; }
+                          if (moved) {
+                              refreshList();
+                              schedulePreview();
+                          }
+                          if (moved) handler.postDelayed(this, delay);
+                          else       holding = false; // hit boundary
+                      }
+                  };
+                  handler.post(scrollRunnable);
+              }
 
+              private void stopScroll() {
+                  holding = false;
+                  holdDir = 0;
+                  if (scrollRunnable != null) { handler.removeCallbacks(scrollRunnable); scrollRunnable = null; }
+              }
+
+              private boolean isInstalled(String pkg) {
+                  try { getPackageManager().getPackageInfo(pkg,0); return true; } catch(Exception e){return false;}
+              }
+
+              // ── PS1 launch: tries multiple Intent strategies ──
               private void launchGame() {
                   if (games.isEmpty()) return;
-                  GameItem g = games.get(selectedGame); String[] cfg = Config.PLATFORMS[platformIdx];
-                  String path = cfg[1]+"/"+g.file; File rom = new File(path);
+                  GameItem g = games.get(selectedGame);
+                  String[] cfg = Config.PLATFORMS[platformIdx];
+                  String path = cfg[1] + "/" + g.file;
+                  File rom = new File(path);
                   if (!rom.exists()) { toast("ملف اللعبة غير موجود"); return; }
                   String pkg = cfg[2];
-                  if (!isInstalled(pkg)) { toast("المحاكي غير مثبت: "+pkg); return; }
-                  RecentStore.record(this, g); lastPlayedFile = g.file; lastPlayedBadge.setVisibility(View.VISIBLE);
-                  try {
-                      Intent i = buildIntent(pkg, rom, path);
-                      if (i != null) startActivity(i); else toast("تعذر فتح اللعبة");
-                  } catch(Exception e) {
-                      try { Intent fb = getPackageManager().getLaunchIntentForPackage(pkg); if(fb!=null) startActivity(fb); else toast("خطأ"); }
-                      catch(Exception ex) { toast("خطأ في التشغيل"); }
+                  if (!isInstalled(pkg)) { toast("المحاكي غير مثبت: " + pkg); return; }
+                  RecentStore.record(this, g);
+                  lastPlayedFile = g.file;
+                  lastPlayedBadge.setVisibility(View.VISIBLE);
+
+                  if (pkg.equals("com.epsxe.ePSXe")) {
+                      launchEpsxe(rom, path);
+                  } else {
+                      try {
+                          Intent i = buildIntent(pkg, rom, path);
+                          if (i != null) startActivity(i); else toast("تعذر فتح اللعبة");
+                      } catch (Exception e) {
+                          try {
+                              Intent fb = getPackageManager().getLaunchIntentForPackage(pkg);
+                              if (fb != null) startActivity(fb); else toast("خطأ");
+                          } catch (Exception ex) { toast("خطأ في التشغيل"); }
+                      }
                   }
+              }
+
+              /**
+               * ePSXe launch strategy (tries 3 methods in order):
+               *   1. ACTION_VIEW with file URI  → works on many versions
+               *   2. Explicit intent to ePSXe main activity with ROM extra
+               *   3. Fallback: open ePSXe without a ROM (user picks manually)
+               */
+              private void launchEpsxe(File rom, String path) {
+                  Uri uri = Uri.fromFile(rom);
+
+                  // Method 1: ACTION_VIEW — simplest, works on newer ePSXe versions
+                  try {
+                      Intent i = new Intent(Intent.ACTION_VIEW);
+                      i.setDataAndType(uri, "application/octet-stream");
+                      i.setPackage("com.epsxe.ePSXe");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      startActivity(i);
+                      return;
+                  } catch (Exception ignored) {}
+
+                  // Method 2: Explicit component with ROM path extras
+                  String[] activities = {
+                      "com.epsxe.ePSXe.ePSXe",
+                      "com.epsxe.ePSXe.MainActivity",
+                      "com.epsxe.ePSXe.GameActivity"
+                  };
+                  for (String actName : activities) {
+                      try {
+                          Intent i = new Intent(Intent.ACTION_MAIN);
+                          i.setComponent(new ComponentName("com.epsxe.ePSXe", actName));
+                          i.putExtra("com.epsxe.ePSXe.ROM", path);
+                          i.putExtra("ROM", path);
+                          i.putExtra("EXTRA_ROM_PATH", path);
+                          i.setData(uri);
+                          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                          startActivity(i);
+                          return;
+                      } catch (Exception ignored) {}
+                  }
+
+                  // Method 3: Fallback — open ePSXe launcher only
+                  try {
+                      Intent fb = getPackageManager().getLaunchIntentForPackage("com.epsxe.ePSXe");
+                      if (fb != null) {
+                          fb.putExtra("com.epsxe.ePSXe.ROM", path);
+                          fb.putExtra("ROM", path);
+                          startActivity(fb);
+                          toast("افتح اللعبة يدوياً من داخل المحاكي");
+                      } else {
+                          toast("تعذر فتح ePSXe");
+                      }
+                  } catch (Exception e) { toast("خطأ في تشغيل PS1"); }
               }
 
               private Intent buildIntent(String pkg, File rom, String path) {
                   Uri uri = Uri.fromFile(rom); Intent i;
                   switch (pkg) {
-                      case "com.epsxe.ePSXe":
-                          i = new Intent(Intent.ACTION_MAIN);
-                          i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));
-                          i.putExtra("com.epsxe.ePSXe.ROM", path); i.putExtra("ROM", path); i.setData(uri);
-                          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP); return i;
                       case "org.ppsspp.ppsspp":
                           i = new Intent(Intent.ACTION_MAIN);
                           i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
@@ -1129,44 +1453,83 @@ jobs:
               }
 
               private void toast(String m) { Toast.makeText(this, m, Toast.LENGTH_SHORT).show(); }
-              private void refreshList() { ((GameAdapter)listView.getAdapter()).notifyDataSetChanged(); listView.setSelection(selectedGame); }
+              private void refreshList() {
+                  ((GameAdapter)listView.getAdapter()).notifyDataSetChanged();
+                  listView.setSelection(selectedGame);
+              }
 
+              // ── Key handling with fast scroll ──
               @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (keyCode==KeyEvent.KEYCODE_BUTTON_START) startPressed=true;
-                  if (keyCode==KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed=true;
-                  if (startPressed && selectPressed) { finishAffinity(); return true; }
-                  long now=System.currentTimeMillis(); int rep=event.getRepeatCount();
-                  switch(keyCode) {
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = true;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = true;
+
+                  // START+SELECT → show exit confirmation dialog
+                  if (startPressed && selectPressed) {
+                      stopScroll();
+                      if (exitDialog == null || !exitDialog.isShowing()) {
+                          exitDialog = new ExitDialog(this, () -> finishAffinity());
+                          exitDialog.show();
+                      }
+                      return true;
+                  }
+
+                  switch (keyCode) {
                       case KeyEvent.KEYCODE_DPAD_UP:
-                          if (now-lastInput < scrollDelay(rep)) return true;
-                          if (selectedGame>0) { lastInput=now; selectedGame--; refreshList(); schedulePreview(); } return true;
+                          if (event.getRepeatCount() == 0) startScrollLoop(-1);
+                          return true;
                       case KeyEvent.KEYCODE_DPAD_DOWN:
-                          if (now-lastInput < scrollDelay(rep)) return true;
-                          if (selectedGame<games.size()-1) { lastInput=now; selectedGame++; refreshList(); schedulePreview(); } return true;
-                      case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER:
-                          if (rep==0) { lastInput=now; launchGame(); } return true;
-                      case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_BACK:
-                          finish(); overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right); return true;
+                          if (event.getRepeatCount() == 0) startScrollLoop(1);
+                          return true;
+                      case KeyEvent.KEYCODE_BUTTON_A:
+                      case KeyEvent.KEYCODE_ENTER:
+                      case KeyEvent.KEYCODE_DPAD_CENTER:
+                          if (event.getRepeatCount() == 0) launchGame();
+                          return true;
+                      case KeyEvent.KEYCODE_BUTTON_B:
+                      case KeyEvent.KEYCODE_BACK:
+                          finish(); overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+                          return true;
                   }
                   return super.onKeyDown(keyCode, event);
               }
+
               @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if (keyCode==KeyEvent.KEYCODE_BUTTON_START) startPressed=false;
-                  if (keyCode==KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed=false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_START)  startPressed  = false;
+                  if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed = false;
+                  // Stop scroll when D-Pad released
+                  if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                      stopScroll();
+                  }
                   return super.onKeyUp(keyCode, event);
               }
+
               @Override public boolean onGenericMotionEvent(MotionEvent event) {
-                  if ((event.getSource()&InputDevice.SOURCE_JOYSTICK)==InputDevice.SOURCE_JOYSTICK && event.getAction()==MotionEvent.ACTION_MOVE) {
-                      long now=System.currentTimeMillis(); float y=event.getAxisValue(MotionEvent.AXIS_Y), hatY=event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-                      long elapsed=now-lastInput; long delay=elapsed<400?120:elapsed<1000?70:30;
-                      if (y<-0.5f||hatY<-0.5f) { if(now-lastInput<delay) return true; if(selectedGame>0){lastInput=now;selectedGame--;refreshList();schedulePreview();} }
-                      else if (y>0.5f||hatY>0.5f) { if(now-lastInput<delay) return true; if(selectedGame<games.size()-1){lastInput=now;selectedGame++;refreshList();schedulePreview();} }
+                  if ((event.getSource()&InputDevice.SOURCE_JOYSTICK)==InputDevice.SOURCE_JOYSTICK
+                          && event.getAction()==MotionEvent.ACTION_MOVE) {
+                      float y = event.getAxisValue(MotionEvent.AXIS_Y);
+                      float hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                      float combined = Math.abs(y) > Math.abs(hatY) ? y : hatY;
+                      if (combined < -0.5f) {
+                          if (!holding || holdDir != -1) startScrollLoop(-1);
+                      } else if (combined > 0.5f) {
+                          if (!holding || holdDir != 1) startScrollLoop(1);
+                      } else {
+                          stopScroll();
+                      }
                       return true;
                   }
                   return super.onGenericMotionEvent(event);
               }
-              @Override public void onBackPressed() { finish(); overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right); }
-              @Override protected void onDestroy() { super.onDestroy(); if(imageThread!=null) imageThread.interrupt(); handler.removeCallbacksAndMessages(null); }
+
+              @Override public void onBackPressed() {
+                  finish(); overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+              }
+              @Override protected void onDestroy() {
+                  super.onDestroy();
+                  stopScroll();
+                  if (imageThread != null) imageThread.interrupt();
+                  handler.removeCallbacksAndMessages(null);
+              }
 
               class GameAdapter extends BaseAdapter {
                   @Override public int getCount() { return games.size(); }
@@ -1174,15 +1537,38 @@ jobs:
                   @Override public long getItemId(int p) { return p; }
                   @Override public View getView(int pos, View cv, ViewGroup parent) {
                       ViewHolder vh;
-                      if (cv==null) {
+                      if (cv == null) {
                           cv = getLayoutInflater().inflate(R.layout.item_game, parent, false);
-                          vh = new ViewHolder(); vh.num=cv.findViewById(R.id.gameNum); vh.name=cv.findViewById(R.id.gameName); vh.accent=cv.findViewById(R.id.accentBar); cv.setTag(vh);
-                      } else { vh=(ViewHolder)cv.getTag(); }
-                      GameItem g=games.get(pos); boolean sel=(pos==selectedGame); boolean last=g.file.equals(lastPlayedFile);
-                      vh.num.setText(String.format("%02d",pos+1)); vh.name.setText(g.name);
-                      if (sel) { cv.setBackgroundColor(0xff16163a); vh.name.setTextColor(0xffffffff); vh.name.setTextSize(15f); vh.num.setTextColor(0xff7c5cbf); vh.accent.setVisibility(View.VISIBLE); vh.accent.setBackgroundColor(0xff7c5cbf); }
-                      else if (last) { cv.setBackgroundColor(0xff120a05); vh.name.setTextColor(0xffff9955); vh.name.setTextSize(13.5f); vh.num.setTextColor(0xffff6b35); vh.accent.setVisibility(View.VISIBLE); vh.accent.setBackgroundColor(0xffff6b35); }
-                      else { cv.setBackgroundColor(0x00000000); vh.name.setTextColor(0xff5a6a8a); vh.name.setTextSize(13.5f); vh.num.setTextColor(0xff2c3550); vh.accent.setVisibility(View.INVISIBLE); }
+                          vh = new ViewHolder();
+                          vh.num   = cv.findViewById(R.id.gameNum);
+                          vh.name  = cv.findViewById(R.id.gameName);
+                          vh.accent = cv.findViewById(R.id.accentBar);
+                          cv.setTag(vh);
+                      } else { vh = (ViewHolder)cv.getTag(); }
+
+                      GameItem g = games.get(pos);
+                      boolean sel  = (pos == selectedGame);
+                      boolean last = g.file.equals(lastPlayedFile);
+
+                      vh.num.setText(String.format("%02d", pos+1));
+                      vh.name.setText(g.name);
+
+                      if (sel) {
+                          cv.setBackgroundColor(0xff0d1e3a);
+                          vh.name.setTextColor(0xffffffff); vh.name.setTextSize(15f);
+                          vh.num.setTextColor(0xff0070d1);
+                          vh.accent.setVisibility(View.VISIBLE); vh.accent.setBackgroundColor(0xff0070d1);
+                      } else if (last) {
+                          cv.setBackgroundColor(0xff120a05);
+                          vh.name.setTextColor(0xffff9955); vh.name.setTextSize(13.5f);
+                          vh.num.setTextColor(0xffff6b35);
+                          vh.accent.setVisibility(View.VISIBLE); vh.accent.setBackgroundColor(0xffff6b35);
+                      } else {
+                          cv.setBackgroundColor(0x00000000);
+                          vh.name.setTextColor(0xff4a6090); vh.name.setTextSize(13.5f);
+                          vh.num.setTextColor(0xff1e3050);
+                          vh.accent.setVisibility(View.INVISIBLE);
+                      }
                       return cv;
                   }
                   class ViewHolder { TextView num, name; View accent; }
@@ -1190,6 +1576,7 @@ jobs:
           }
           EOF
 
+          # ── RecentActivity: same fast scroll + exit dialog ──
           cat > app/src/main/java/com/khaloahmed/launcher/RecentActivity.java << 'EOF'
           package com.khaloahmed.launcher;
 
@@ -1218,6 +1605,15 @@ jobs:
           import java.util.List;
 
           public class RecentActivity extends Activity {
+
+              private static final long DELAY_SLOW   = 220;
+              private static final long DELAY_MEDIUM = 90;
+              private static final long DELAY_FAST   = 35;
+
+              private long holdStart = 0;
+              private boolean holding = false;
+              private int holdDir = 0;
+
               private List<RecentEntry> entries;
               private int selectedIdx = 0;
               private boolean startPressed = false, selectPressed = false;
@@ -1226,10 +1622,10 @@ jobs:
               private TextView noArtView, previewTitle, recentCount, platformBadge;
               private Handler handler = new Handler();
               private Runnable previewRunnable;
+              private Runnable scrollRunnable;
               private Thread imageThread;
               private long lastInput = 0;
-
-              private long scrollDelay(int r) { if(r==0) return 160; if(r<4) return 110; if(r<10) return 65; if(r<20) return 38; return 22; }
+              private ExitDialog exitDialog;
 
               @Override protected void onCreate(Bundle s) {
                   super.onCreate(s);
@@ -1238,9 +1634,12 @@ jobs:
                   getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
                   setContentView(R.layout.activity_recent);
                   entries = RecentStore.load(this);
-                  listView = findViewById(R.id.recentList); previewImg = findViewById(R.id.recentPreviewImg);
-                  previewBg = findViewById(R.id.recentPreviewBg); noArtView = findViewById(R.id.recentNoArt);
-                  previewTitle = findViewById(R.id.recentPreviewTitle); recentCount = findViewById(R.id.recentCount);
+                  listView      = findViewById(R.id.recentList);
+                  previewImg    = findViewById(R.id.recentPreviewImg);
+                  previewBg     = findViewById(R.id.recentPreviewBg);
+                  noArtView     = findViewById(R.id.recentNoArt);
+                  previewTitle  = findViewById(R.id.recentPreviewTitle);
+                  recentCount   = findViewById(R.id.recentCount);
                   platformBadge = findViewById(R.id.platformBadge);
                   recentCount.setText(entries.size() + " GAMES");
                   setupList(); updatePreview(false);
@@ -1248,7 +1647,10 @@ jobs:
 
               private void setupList() {
                   RecentAdapter adapter = new RecentAdapter(); listView.setAdapter(adapter);
-                  listView.setOnItemClickListener((p,v,pos,id) -> { selectedIdx=pos; adapter.notifyDataSetChanged(); listView.setSelection(pos); updatePreview(true); });
+                  listView.setOnItemClickListener((p,v,pos,id) -> {
+                      selectedIdx = pos; adapter.notifyDataSetChanged();
+                      listView.setSelection(pos); updatePreview(true);
+                  });
               }
 
               private void updatePreview(boolean animate) {
@@ -1274,7 +1676,36 @@ jobs:
 
               private void schedulePreview() {
                   if (previewRunnable!=null) handler.removeCallbacks(previewRunnable);
-                  previewRunnable = () -> updatePreview(true); handler.postDelayed(previewRunnable, 90);
+                  previewRunnable = () -> updatePreview(true);
+                  handler.postDelayed(previewRunnable, 80);
+              }
+
+              private void startScrollLoop(int dir) {
+                  holdDir = dir; holding = true; holdStart = System.currentTimeMillis();
+                  if (scrollRunnable != null) handler.removeCallbacks(scrollRunnable);
+                  scrollRunnable = new Runnable() {
+                      @Override public void run() {
+                          if (!holding || holdDir != dir) return;
+                          long elapsed = System.currentTimeMillis() - holdStart;
+                          long delay = elapsed < 600 ? DELAY_SLOW : elapsed < 1500 ? DELAY_MEDIUM : DELAY_FAST;
+                          boolean moved = false;
+                          if (dir < 0 && selectedIdx > 0)               { selectedIdx--; moved = true; }
+                          else if (dir > 0 && selectedIdx < entries.size()-1) { selectedIdx++; moved = true; }
+                          if (moved) {
+                              ((RecentAdapter)listView.getAdapter()).notifyDataSetChanged();
+                              listView.setSelection(selectedIdx);
+                              schedulePreview();
+                          }
+                          if (moved) handler.postDelayed(this, delay);
+                          else       holding = false;
+                      }
+                  };
+                  handler.post(scrollRunnable);
+              }
+
+              private void stopScroll() {
+                  holding = false; holdDir = 0;
+                  if (scrollRunnable != null) { handler.removeCallbacks(scrollRunnable); scrollRunnable = null; }
               }
 
               private String getPlatformIcon(String platform) {
@@ -1292,54 +1723,96 @@ jobs:
                   if (cfg==null) return;
                   if (!isInstalled(cfg[2])) { Toast.makeText(this,"المحاكي غير مثبت",Toast.LENGTH_SHORT).show(); return; }
                   RecentStore.record(this, g);
+                  File rom = new File(cfg[1]+"/"+e.file);
+                  Uri uri = Uri.fromFile(rom);
+
+                  if (cfg[2].equals("com.epsxe.ePSXe")) {
+                      launchEpsxe(rom, rom.getAbsolutePath()); return;
+                  }
+
                   try {
-                      File rom=new File(cfg[1]+"/"+e.file); Uri uri=Uri.fromFile(rom); Intent i;
+                      Intent i;
                       switch(cfg[2]) {
-                          case "com.epsxe.ePSXe":
-                              i=new Intent(Intent.ACTION_MAIN); i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));
-                              i.putExtra("com.epsxe.ePSXe.ROM",rom.getAbsolutePath()); i.putExtra("ROM",rom.getAbsolutePath()); i.setData(uri);
-                              i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP); break;
                           case "org.ppsspp.ppsspp":
-                              i=new Intent(Intent.ACTION_MAIN); i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
-                              i.putExtra("org.ppsspp.ppsspp.Shortcuts",rom.getAbsolutePath()); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP); break;
-                          default: i=new Intent(Intent.ACTION_VIEW); i.setPackage(cfg[2]); i.setDataAndType(uri,"*/*"); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                              i=new Intent(Intent.ACTION_MAIN);
+                              i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
+                              i.putExtra("org.ppsspp.ppsspp.Shortcuts",rom.getAbsolutePath());
+                              i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP); break;
+                          default:
+                              i=new Intent(Intent.ACTION_VIEW); i.setPackage(cfg[2]);
+                              i.setDataAndType(uri,"*/*"); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                       }
                       startActivity(i);
                   } catch(Exception ex) { Toast.makeText(this,"خطأ في التشغيل",Toast.LENGTH_SHORT).show(); }
               }
 
+              private void launchEpsxe(File rom, String path) {
+                  Uri uri = Uri.fromFile(rom);
+                  try {
+                      Intent i = new Intent(Intent.ACTION_VIEW);
+                      i.setDataAndType(uri, "application/octet-stream");
+                      i.setPackage("com.epsxe.ePSXe");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      startActivity(i); return;
+                  } catch (Exception ignored) {}
+                  String[] acts = {"com.epsxe.ePSXe.ePSXe","com.epsxe.ePSXe.MainActivity","com.epsxe.ePSXe.GameActivity"};
+                  for (String a : acts) {
+                      try {
+                          Intent i = new Intent(Intent.ACTION_MAIN);
+                          i.setComponent(new ComponentName("com.epsxe.ePSXe", a));
+                          i.putExtra("com.epsxe.ePSXe.ROM", path); i.putExtra("ROM", path);
+                          i.setData(uri); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                          startActivity(i); return;
+                      } catch (Exception ignored) {}
+                  }
+                  try {
+                      Intent fb = getPackageManager().getLaunchIntentForPackage("com.epsxe.ePSXe");
+                      if (fb!=null) { fb.putExtra("ROM",path); startActivity(fb); Toast.makeText(this,"افتح اللعبة يدوياً",Toast.LENGTH_SHORT).show(); }
+                  } catch (Exception e) { Toast.makeText(this,"خطأ في تشغيل PS1",Toast.LENGTH_SHORT).show(); }
+              }
+
               @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_START) startPressed=true;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_START)  startPressed=true;
                   if(keyCode==KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed=true;
-                  if(startPressed&&selectPressed){finishAffinity();return true;}
-                  long now=System.currentTimeMillis(); int rep=event.getRepeatCount();
-                  RecentAdapter adp=(RecentAdapter)listView.getAdapter();
+                  if(startPressed&&selectPressed) {
+                      stopScroll();
+                      if (exitDialog==null || !exitDialog.isShowing()) {
+                          exitDialog = new ExitDialog(this, () -> finishAffinity());
+                          exitDialog.show();
+                      }
+                      return true;
+                  }
                   switch(keyCode){
-                      case KeyEvent.KEYCODE_DPAD_UP: if(now-lastInput<scrollDelay(rep)) return true; if(selectedIdx>0){lastInput=now;selectedIdx--;adp.notifyDataSetChanged();listView.setSelection(selectedIdx);schedulePreview();} return true;
-                      case KeyEvent.KEYCODE_DPAD_DOWN: if(now-lastInput<scrollDelay(rep)) return true; if(selectedIdx<entries.size()-1){lastInput=now;selectedIdx++;adp.notifyDataSetChanged();listView.setSelection(selectedIdx);schedulePreview();} return true;
-                      case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER: if(rep==0){lastInput=now;launchSelected();} return true;
-                      case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_BACK: finish(); overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right); return true;
+                      case KeyEvent.KEYCODE_DPAD_UP:
+                          if(event.getRepeatCount()==0) startScrollLoop(-1); return true;
+                      case KeyEvent.KEYCODE_DPAD_DOWN:
+                          if(event.getRepeatCount()==0) startScrollLoop(1); return true;
+                      case KeyEvent.KEYCODE_BUTTON_A: case KeyEvent.KEYCODE_ENTER: case KeyEvent.KEYCODE_DPAD_CENTER:
+                          if(event.getRepeatCount()==0) launchSelected(); return true;
+                      case KeyEvent.KEYCODE_BUTTON_B: case KeyEvent.KEYCODE_BACK:
+                          finish(); overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_right); return true;
                   }
                   return super.onKeyDown(keyCode, event);
               }
               @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
-                  if(keyCode==KeyEvent.KEYCODE_BUTTON_START) startPressed=false;
+                  if(keyCode==KeyEvent.KEYCODE_BUTTON_START)  startPressed=false;
                   if(keyCode==KeyEvent.KEYCODE_BUTTON_SELECT) selectPressed=false;
+                  if(keyCode==KeyEvent.KEYCODE_DPAD_UP||keyCode==KeyEvent.KEYCODE_DPAD_DOWN) stopScroll();
                   return super.onKeyUp(keyCode, event);
               }
               @Override public boolean onGenericMotionEvent(MotionEvent event) {
-                  if((event.getSource()&InputDevice.SOURCE_JOYSTICK)==InputDevice.SOURCE_JOYSTICK && event.getAction()==MotionEvent.ACTION_MOVE){
-                      long now=System.currentTimeMillis(); float y=event.getAxisValue(MotionEvent.AXIS_Y),hatY=event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-                      long elapsed=now-lastInput; long delay=elapsed<400?120:elapsed<1000?70:30;
-                      RecentAdapter adp=(RecentAdapter)listView.getAdapter();
-                      if(y<-0.5f||hatY<-0.5f){if(now-lastInput<delay)return true;if(selectedIdx>0){lastInput=now;selectedIdx--;adp.notifyDataSetChanged();listView.setSelection(selectedIdx);schedulePreview();}}
-                      else if(y>0.5f||hatY>0.5f){if(now-lastInput<delay)return true;if(selectedIdx<entries.size()-1){lastInput=now;selectedIdx++;adp.notifyDataSetChanged();listView.setSelection(selectedIdx);schedulePreview();}}
+                  if((event.getSource()&InputDevice.SOURCE_JOYSTICK)==InputDevice.SOURCE_JOYSTICK&&event.getAction()==MotionEvent.ACTION_MOVE){
+                      float y=event.getAxisValue(MotionEvent.AXIS_Y), hatY=event.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                      float combined = Math.abs(y)>Math.abs(hatY)?y:hatY;
+                      if(combined<-0.5f) { if(!holding||holdDir!=-1) startScrollLoop(-1); }
+                      else if(combined>0.5f) { if(!holding||holdDir!=1) startScrollLoop(1); }
+                      else stopScroll();
                       return true;
                   }
                   return super.onGenericMotionEvent(event);
               }
-              @Override public void onBackPressed(){finish();overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_right);}
-              @Override protected void onDestroy(){super.onDestroy();if(imageThread!=null)imageThread.interrupt();handler.removeCallbacksAndMessages(null);}
+              @Override public void onBackPressed(){ finish(); overridePendingTransition(R.anim.slide_in_left,R.anim.slide_out_right); }
+              @Override protected void onDestroy(){ super.onDestroy(); stopScroll(); if(imageThread!=null)imageThread.interrupt(); handler.removeCallbacksAndMessages(null); }
 
               class RecentAdapter extends BaseAdapter {
                   @Override public int getCount(){return entries.size();}
@@ -1347,13 +1820,24 @@ jobs:
                   @Override public long getItemId(int p){return p;}
                   @Override public View getView(int pos, View cv, ViewGroup parent) {
                       ViewHolder vh;
-                      if(cv==null){cv=getLayoutInflater().inflate(R.layout.item_recent,parent,false);vh=new ViewHolder();vh.icon=cv.findViewById(R.id.itemIcon);vh.name=cv.findViewById(R.id.itemName);vh.platform=cv.findViewById(R.id.itemPlatform);vh.accent=cv.findViewById(R.id.accentBar);cv.setTag(vh);}
-                      else{vh=(ViewHolder)cv.getTag();}
+                      if(cv==null){
+                          cv=getLayoutInflater().inflate(R.layout.item_recent,parent,false);
+                          vh=new ViewHolder(); vh.icon=cv.findViewById(R.id.itemIcon);
+                          vh.name=cv.findViewById(R.id.itemName); vh.platform=cv.findViewById(R.id.itemPlatform);
+                          vh.accent=cv.findViewById(R.id.accentBar); cv.setTag(vh);
+                      } else{vh=(ViewHolder)cv.getTag();}
                       RecentEntry e=entries.get(pos); boolean sel=(pos==selectedIdx);
                       vh.icon.setText(getPlatformIcon(e.platform)); vh.name.setText(e.name);
                       vh.platform.setText(e.platform+(pos==0?"  LAST PLAYED":""));
-                      if(sel){cv.setBackgroundColor(0xff1f0a04);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(15f);vh.platform.setTextColor(0xffff6b35);vh.accent.setVisibility(View.VISIBLE);}
-                      else{cv.setBackgroundColor(0x00000000);vh.name.setTextColor(0xff7a6a5a);vh.name.setTextSize(13.5f);vh.platform.setTextColor(0xff3a2a1a);vh.accent.setVisibility(View.INVISIBLE);}
+                      if(sel){
+                          cv.setBackgroundColor(0xff0d1e3a);
+                          vh.name.setTextColor(0xffffffff); vh.name.setTextSize(15f);
+                          vh.platform.setTextColor(0xff0070d1); vh.accent.setVisibility(View.VISIBLE);
+                      } else {
+                          cv.setBackgroundColor(0x00000000);
+                          vh.name.setTextColor(0xff4a6090); vh.name.setTextSize(13.5f);
+                          vh.platform.setTextColor(0xff1a2a40); vh.accent.setVisibility(View.INVISIBLE);
+                      }
                       return cv;
                   }
                   class ViewHolder{TextView icon,name,platform;View accent;}
