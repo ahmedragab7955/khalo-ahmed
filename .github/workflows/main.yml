@@ -17,14 +17,269 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Create Android Project Structure
+        run: |
+          # Create directories
+          mkdir -p app/src/main/java/com/khaloahmed/launcher
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/assets/launcher
+
+          # settings.gradle
+          cat > settings.gradle << 'SETTINGS'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "KhaloAhmed"
+          include ':app'
+          SETTINGS
+
+          # root build.gradle
+          cat > build.gradle << 'ROOTGRADLE'
+          plugins {
+              id 'com.android.application' version '7.4.2' apply false
+          }
+          ROOTGRADLE
+
+          # app/build.gradle
+          cat > app/build.gradle << 'APPGRADLE'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.khaloahmed.launcher'
+              compileSdk 33
+              defaultConfig {
+                  applicationId "com.khaloahmed.launcher"
+                  minSdk 21
+                  targetSdk 33
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.debug
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+          }
+          APPGRADLE
+
+          # AndroidManifest.xml
+          cat > app/src/main/AndroidManifest.xml << 'MANIFEST'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.khaloahmed.launcher">
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+              <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+              <uses-feature android:name="android.software.leanback" android:required="false"/>
+              <application
+                  android:allowBackup="true"
+                  android:label="Khalo Ahmed"
+                  android:theme="@style/Theme.KhaloAhmed">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|keyboardHidden|screenSize"
+                      android:screenOrientation="landscape">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                          <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          MANIFEST
+
+          # styles.xml
+          cat > app/src/main/res/values/styles.xml << 'STYLES'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="Theme.KhaloAhmed" parent="android:Theme.NoTitleBar.Fullscreen"/>
+          </resources>
+          STYLES
+
+      - name: Create MainActivity
+        run: |
+          cat > app/src/main/java/com/khaloahmed/launcher/MainActivity.java << 'JAVA'
+          package com.khaloahmed.launcher;
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.webkit.*;
+          import android.view.*;
+          import org.json.*;
+          import java.io.*;
+          import java.util.*;
+          public class MainActivity extends Activity {
+              private WebView webView;
+              private static final Map<String,String[]> PLATFORMS = new LinkedHashMap<String,String[]>(){{
+                  put("PS1",new String[]{"/storage/0CF6-106E/ps1","com.epsxe.ePSXe",".bin,.iso,.img,.pbp,.cue"});
+                  put("PSP",new String[]{"/storage/0CF6-106E/psp","org.ppsspp.ppsspp",".iso,.cso,.pbp"});
+                  put("GBC",new String[]{"/storage/0CF6-106E/gbc","com.fastemulator.gbcfree",".gbc,.gb,.zip"});
+              }};
+              private static final Set<String> IMG=new HashSet<>(Arrays.asList(".png",".jpg",".jpeg",".webp"));
+              @Override protected void onCreate(Bundle s){
+                  super.onCreate(s);
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                  webView=new WebView(this);setContentView(webView);
+                  WebSettings ws=webView.getSettings();
+                  ws.setJavaScriptEnabled(true);ws.setAllowFileAccess(true);
+                  ws.setAllowFileAccessFromFileURLs(true);ws.setAllowUniversalAccessFromFileURLs(true);
+                  ws.setDomStorageEnabled(true);
+                  webView.addJavascriptInterface(new Bridge(),"Android");
+                  webView.loadUrl("file:///android_asset/launcher/index.html");
+              }
+              class Bridge {
+                  @JavascriptInterface public String getGamesList(){
+                      JSONArray games=new JSONArray();
+                      try{for(Map.Entry<String,String[]> e:PLATFORMS.entrySet()){
+                          String plat=e.getKey(),path=e.getValue()[0],extsStr=e.getValue()[2];
+                          Set<String> exts=new HashSet<>(Arrays.asList(extsStr.split(",")));
+                          File dir=new File(path);if(!dir.exists())continue;
+                          File[] files=dir.listFiles();if(files==null)continue;
+                          Map<String,String> arts=new HashMap<>();
+                          for(File f:files){String n=f.getName().toLowerCase();for(String ie:IMG){if(n.endsWith(ie)){arts.put(n.substring(0,n.lastIndexOf('.')),f.getAbsolutePath());}}}
+                          for(File f:files){if(!f.isFile())continue;String name=f.getName(),nl=name.toLowerCase();
+                              boolean rom=false;for(String ex:exts){if(nl.endsWith(ex.trim())){rom=true;break;}}if(!rom)continue;
+                              String base=name.contains(".")?name.substring(0,name.lastIndexOf('.')):name;
+                              JSONObject g=new JSONObject();g.put("name",base.replaceAll("[_\\-]"," ").trim());
+                              g.put("platform",plat);g.put("file",name);g.put("path",f.getAbsolutePath());
+                              g.put("art",arts.containsKey(base.toLowerCase())?arts.get(base.toLowerCase()):"");
+                              games.put(g);}
+                      }}catch(Exception e){e.printStackTrace();}
+                      return games.toString();
+                  }
+                  @JavascriptInterface public void launchGame(String pkg,String rom){
+                      try{Intent i=getPackageManager().getLaunchIntentForPackage(pkg);if(i==null)return;
+                          i.setData(Uri.fromFile(new File(rom)));i.putExtra("romPath",rom);
+                          i.putExtra("com.epsxe.ePSXe.ROM",rom);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(i);
+                      }catch(Exception e){e.printStackTrace();}
+                  }
+              }
+              @Override public void onBackPressed(){webView.evaluateJavascript("if(document.getElementById('nowPlaying').classList.contains('show')){closeNowPlaying();}",null);}
+          }
+          JAVA
+
+      - name: Copy HTML launcher
+        run: |
+          cat > app/src/main/assets/launcher/index.html << 'HTML'
+          <!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>Khalo Ahmed</title>
+          <style>
+          @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Cairo:wght@400;600&display=swap');
+          :root{--bg:#0a0a0f;--card:#1a1a26;--gold:#f0c040;--text:#e8e8f0;--dim:#7070a0;}
+          *{margin:0;padding:0;box-sizing:border-box;}
+          body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;min-height:100vh;}
+          header{display:flex;align-items:center;justify-content:space-between;padding:20px 40px;}
+          .logo{font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#6488ff,#a070ff,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+          .clock{font-family:'Orbitron',monospace;font-size:1rem;color:var(--dim);}
+          .tabs{display:flex;gap:12px;padding:0 40px 20px;}
+          .tab{padding:10px 28px;border-radius:8px;border:2px solid transparent;background:var(--card);color:var(--dim);font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:2px;cursor:pointer;transition:all .2s;outline:none;}
+          .tab.active{border-color:var(--gold);color:var(--gold);box-shadow:0 0 20px rgba(240,192,64,.2);}
+          .search-wrap{padding:20px 40px;}
+          .search-bar{background:var(--card);border:2px solid rgba(255,255,255,.05);border-radius:10px;padding:12px 20px;color:var(--text);font-family:'Cairo',sans-serif;font-size:1rem;width:100%;max-width:400px;outline:none;}
+          .search-bar:focus{border-color:var(--gold);}
+          .section-title{padding:10px 40px 16px;font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:3px;color:var(--dim);}
+          .stats{padding:0 40px 12px;font-size:.7rem;color:var(--dim);font-family:'Orbitron',monospace;}
+          .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;padding:0 40px 100px;}
+          .game-card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .2s;aspect-ratio:3/4;display:flex;flex-direction:column;outline:none;}
+          .game-card.focused{border-color:var(--gold);transform:scale(1.06);box-shadow:0 8px 40px rgba(240,192,64,.3);}
+          .game-art{flex:1;position:relative;overflow:hidden;background:#12121a;}
+          .game-art img{width:100%;height:100%;object-fit:cover;}
+          .no-art{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--dim);font-size:2rem;}
+          .no-art span{font-size:.65rem;letter-spacing:1px;font-family:'Orbitron',monospace;}
+          .card-info{padding:10px 12px;background:var(--card);}
+          .card-title{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+          .card-platform{font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:1px;color:var(--dim);margin-top:3px;}
+          .platform-badge{position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:4px;font-family:'Orbitron',monospace;font-size:.55rem;font-weight:700;z-index:2;}
+          .badge-PS1{background:rgba(0,48,135,.85);color:#88aaff;}
+          .badge-PSP{background:rgba(30,30,80,.85);color:#c0c0ff;}
+          .badge-GBC{background:rgba(100,20,20,.85);color:#ff9090;}
+          .now-playing{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;gap:24px;}
+          .now-playing.show{display:flex;}
+          .np-art{width:200px;height:260px;border-radius:12px;overflow:hidden;box-shadow:0 0 60px rgba(100,136,255,.4);border:2px solid var(--gold);}
+          .np-art img{width:100%;height:100%;object-fit:cover;}
+          .np-title{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--gold);text-align:center;}
+          .np-platform{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim);}
+          .np-hint{font-size:.8rem;color:var(--dim);margin-top:10px;}
+          .hint-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 40px;background:linear-gradient(0deg,var(--bg) 0%,transparent 100%);display:flex;gap:24px;font-size:.7rem;color:var(--dim);font-family:'Orbitron',monospace;}
+          .hint-key{background:var(--card);border:1px solid rgba(255,255,255,.1);padding:2px 8px;border-radius:4px;margin-left:6px;}
+          </style></head><body>
+          <header><div class="logo">KHALO AHMED</div><div class="clock" id="clock">00:00</div></header>
+          <div class="tabs" id="tabs">
+          <button class="tab active" data-platform="ALL">ALL</button>
+          <button class="tab" data-platform="PS1">PS1</button>
+          <button class="tab" data-platform="PSP">PSP</button>
+          <button class="tab" data-platform="GBC">GBC</button>
+          </div>
+          <div class="search-wrap"><input class="search-bar" id="searchBar" type="text" placeholder="🔍 ابحث عن لعبة..."></div>
+          <div class="stats" id="stats"></div>
+          <div class="section-title" id="sectionTitle">ALL GAMES</div>
+          <div class="games-grid" id="gamesGrid"></div>
+          <div class="now-playing" id="nowPlaying">
+          <div class="np-art"><img id="npArt" src="" alt=""></div>
+          <div class="np-title" id="npTitle"></div>
+          <div class="np-platform" id="npPlatform"></div>
+          <div class="np-hint">اضغط OK للتشغيل • BACK للرجوع</div>
+          </div>
+          <div class="hint-bar"><span><span class="hint-key">D-PAD</span> تنقل</span><span><span class="hint-key">OK</span> تشغيل</span><span><span class="hint-key">BACK</span> رجوع</span></div>
+          <script>
+          const PLATFORMS={PS1:{path:'/storage/0CF6-106E/ps1',emu:'com.epsxe.ePSXe',icon:'🎮'},PSP:{path:'/storage/0CF6-106E/psp',emu:'org.ppsspp.ppsspp',icon:'🕹️'},GBC:{path:'/storage/0CF6-106E/gbc',emu:'com.fastemulator.gbcfree',icon:'👾'}};
+          const DEMO=[{name:'Final Fantasy VII',platform:'PS1',file:'ff7.bin',art:''},{name:'Crash Bandicoot',platform:'PS1',file:'crash.bin',art:''},{name:'God of War',platform:'PSP',file:'gow.iso',art:''},{name:'Monster Hunter',platform:'PSP',file:'mhf.iso',art:''},{name:'Pokemon Red',platform:'GBC',file:'pokered.gbc',art:''},{name:'Pokemon Crystal',platform:'GBC',file:'pokecrystal.gbc',art:''}];
+          let all=[],filtered=[],cur='ALL',fi=0,fz='grid',npGame=null;
+          function init(){loadGames();updateClock();setInterval(updateClock,1000);setupKeys();}
+          function updateClock(){const n=new Date();document.getElementById('clock').textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');}
+          function loadGames(){try{if(window.Android&&window.Android.getGamesList){all=JSON.parse(window.Android.getGamesList());}else{all=DEMO;}}catch(e){all=DEMO;}filterRender();}
+          function filterRender(){const s=document.getElementById('searchBar').value.toLowerCase();filtered=all.filter(g=>(cur==='ALL'||g.platform===cur)&&(!s||g.name.toLowerCase().includes(s)));document.getElementById('sectionTitle').textContent=(cur==='ALL'?'ALL':cur)+' GAMES';document.getElementById('stats').textContent=filtered.length+' GAMES';renderGrid();}
+          function renderGrid(){const g=document.getElementById('gamesGrid');if(!filtered.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--dim);font-family:Orbitron,monospace">NO GAMES</div>';return;}
+          g.innerHTML=filtered.map((game,i)=>{const p=PLATFORMS[game.platform]||{icon:'🎮'};const artSrc=game.art?'file://'+game.art:'';
+          return`<div class="game-card ${i===fi&&fz==='grid'?'focused':''}" data-index="${i}" onclick="selectGame(${i})">
+          <div class="game-art">${artSrc?`<img src="${artSrc}" onerror="this.parentElement.innerHTML='<div class=no-art>${p.icon}<span>NO ART</span></div>'">`:`<div class="no-art">${p.icon}<span>NO ART</span></div>`}
+          <div class="platform-badge badge-${game.platform}">${game.platform}</div></div>
+          <div class="card-info"><div class="card-title">${game.name}</div><div class="card-platform">${game.platform}</div></div></div>`;}).join('');}
+          function selectGame(i){npGame=filtered[i];if(!npGame)return;document.getElementById('npTitle').textContent=npGame.name;document.getElementById('npPlatform').textContent=npGame.platform+' • '+npGame.file;const a=document.getElementById('npArt');a.src=npGame.art?'file://'+npGame.art:'';document.getElementById('nowPlaying').classList.add('show');}
+          function closeNowPlaying(){document.getElementById('nowPlaying').classList.remove('show');npGame=null;}
+          function launchGame(){if(!npGame)return;const p=PLATFORMS[npGame.platform];if(!p)return;const path=p.path+'/'+npGame.file;if(window.Android&&window.Android.launchGame){window.Android.launchGame(p.emu,path);}}
+          function setupKeys(){document.addEventListener('keydown',handleKey);document.getElementById('searchBar').addEventListener('input',()=>{fi=0;filterRender();});document.getElementById('searchBar').addEventListener('focus',()=>{fz='search';renderGrid();});}
+          function getGridCols(){const g=document.getElementById('gamesGrid');return window.getComputedStyle(g).gridTemplateColumns.split(' ').length||5;}
+          function handleKey(e){const np=document.getElementById('nowPlaying').classList.contains('show');if(np){if(e.key==='Enter'||e.key===' '){launchGame();}else if(e.key==='Escape'||e.keyCode===4){closeNowPlaying();}return;}
+          const c=getGridCols();
+          if(e.key==='ArrowRight'){if(fz==='tabs')moveFocusTab(-1);else if(fz==='grid'){fi=Math.max(0,fi-1);renderGrid();}e.preventDefault();}
+          else if(e.key==='ArrowLeft'){if(fz==='tabs')moveFocusTab(1);else if(fz==='grid'){fi=Math.min(filtered.length-1,fi+1);renderGrid();}e.preventDefault();}
+          else if(e.key==='ArrowDown'){if(fz==='tabs'||fz==='search'){fz='grid';document.getElementById('searchBar').blur();renderGrid();}else{fi=Math.min(filtered.length-1,fi+c);renderGrid();}e.preventDefault();}
+          else if(e.key==='ArrowUp'){if(fz==='grid'&&fi<c){fz='search';document.getElementById('searchBar').focus();}else if(fz==='grid'){fi=Math.max(0,fi-c);renderGrid();}e.preventDefault();}
+          else if(e.key==='Enter'||e.key===' '){if(fz==='grid')selectGame(fi);e.preventDefault();}
+          const card=document.querySelector('.game-card.focused');if(card)card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+          function moveFocusTab(d){const tabs=document.querySelectorAll('.tab');const ai=Array.from(tabs).findIndex(t=>t.classList.contains('active'));tabs[Math.max(0,Math.min(tabs.length-1,ai+d))].click();}
+          document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{cur=t.dataset.platform;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');fi=0;fz='grid';filterRender();}));
+          init();
+          </script></body></html>
+          HTML
+
+      - name: Setup Gradle Wrapper
+        run: |
+          gradle wrapper --gradle-version 7.5
+          chmod +x gradlew
 
       - name: Build Release APK
-        run: |
-          gradle wrapper
-          chmod +x gradlew
-          ./gradlew assembleRelease
+        run: ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
