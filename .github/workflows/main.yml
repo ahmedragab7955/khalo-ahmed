@@ -60,8 +60,8 @@ jobs:
                   applicationId "com.khaloahmed.launcher"
                   minSdk 21
                   targetSdk 34
-                  versionCode 5
-                  versionName "5.0"
+                  versionCode 6
+                  versionName "6.0"
               }
               buildTypes {
                   release {
@@ -131,13 +131,14 @@ jobs:
           </manifest>
           EOF
 
+          # ── الخلفية الرئيسية: فاتحة navy/slate ──
           cat > app/src/main/res/drawable/bg_gradient.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
               <gradient android:type="linear" android:angle="135"
-                  android:startColor="#030d1f"
-                  android:centerColor="#061733"
-                  android:endColor="#0a2650"/>
+                  android:startColor="#1a2a4a"
+                  android:centerColor="#1e3258"
+                  android:endColor="#243d6e"/>
           </shape>
           EOF
 
@@ -145,7 +146,7 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
               <gradient android:type="linear" android:angle="180"
-                  android:startColor="#04101e" android:endColor="#071628"/>
+                  android:startColor="#0f1f3d" android:endColor="#162440"/>
           </shape>
           EOF
 
@@ -153,26 +154,26 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
               <gradient android:type="linear" android:angle="0"
-                  android:startColor="#04101e" android:endColor="#0a2255"/>
+                  android:startColor="#0f1f3d" android:endColor="#1a3060"/>
           </shape>
           EOF
 
           cat > app/src/main/res/values/colors.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <color name="bg_dark">#030d1f</color>
-              <color name="bg_card">#071628</color>
-              <color name="bg_left">#04101e</color>
-              <color name="accent">#1a8fff</color>
-              <color name="accent2">#0055bb</color>
+              <color name="bg_dark">#1a2a4a</color>
+              <color name="bg_card">#162440</color>
+              <color name="bg_left">#0f1f3d</color>
+              <color name="accent">#4db8ff</color>
+              <color name="accent2">#1a7fd4</color>
               <color name="gold">#ffd700</color>
-              <color name="neon">#40d0ff</color>
-              <color name="recent_color">#ff7a45</color>
+              <color name="neon">#7dd8ff</color>
+              <color name="recent_color">#ff9966</color>
               <color name="text_white">#ffffff</color>
-              <color name="text_mid">#a0bce0</color>
-              <color name="text_dim">#4a6a90</color>
-              <color name="selected_bg">#0d2040</color>
-              <color name="divider">#06111f</color>
+              <color name="text_mid">#b8d4f0</color>
+              <color name="text_dim">#6a8ab0</color>
+              <color name="selected_bg">#1a3a60</color>
+              <color name="divider">#0d1f38</color>
           </resources>
           EOF
 
@@ -230,60 +231,58 @@ jobs:
           </set>
           EOF
 
+          # ── PlatformActivity layout: المربعات بطول الشاشة كاملاً ──
           cat > app/src/main/res/layout/activity_platform.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent" android:layout_height="match_parent"
-              android:background="@drawable/bg_gradient">
+              android:background="@drawable/bg_gradient"
+              android:orientation="horizontal">
 
-              <LinearLayout android:id="@+id/headerLayout"
-                  android:layout_width="match_parent" android:layout_height="wrap_content"
-                  android:layout_alignParentTop="true" android:orientation="vertical"
-                  android:gravity="center" android:background="@drawable/bg_header"
-                  android:paddingTop="22dp" android:paddingBottom="14dp">
-                  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                      android:text="KHALO AHMED" android:textColor="@color/neon"
-                      android:textSize="28sp" android:textStyle="bold"
-                      android:letterSpacing="0.30" android:fontFamily="sans-serif-condensed"/>
-                  <View android:layout_width="100dp" android:layout_height="2dp"
-                      android:layout_marginTop="7dp" android:background="@color/accent"/>
-              </LinearLayout>
-
+              <!-- المربعات تمتد بطول الشاشة كاملاً -->
               <LinearLayout android:id="@+id/platformRow"
-                  android:layout_width="wrap_content" android:layout_height="wrap_content"
-                  android:layout_centerInParent="true"
-                  android:orientation="horizontal" android:gravity="center"/>
+                  android:layout_width="0dp" android:layout_height="match_parent"
+                  android:layout_weight="1"
+                  android:orientation="horizontal"
+                  android:gravity="center_vertical"/>
 
-              <LinearLayout android:id="@+id/recentStrip"
-                  android:layout_width="match_parent" android:layout_height="wrap_content"
-                  android:layout_above="@+id/hintText" android:orientation="vertical"
-                  android:paddingStart="32dp" android:paddingEnd="32dp"
-                  android:paddingBottom="6dp" android:visibility="gone">
-                  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                      android:orientation="horizontal" android:gravity="center_vertical"
-                      android:paddingBottom="7dp">
-                      <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                          android:layout_weight="1" android:text="RECENTLY PLAYED"
-                          android:textColor="@color/recent_color" android:textSize="10sp"
-                          android:textStyle="bold" android:letterSpacing="0.2" android:fontFamily="monospace"/>
-                      <TextView android:id="@+id/clearRecentBtn"
+              <!-- شريط Recently Played على اليمين -->
+              <LinearLayout
+                  android:layout_width="wrap_content" android:layout_height="match_parent"
+                  android:orientation="vertical"
+                  android:gravity="bottom"
+                  android:paddingBottom="18dp" android:paddingEnd="16dp">
+
+                  <LinearLayout android:id="@+id/recentStrip"
+                      android:layout_width="wrap_content" android:layout_height="wrap_content"
+                      android:orientation="vertical"
+                      android:visibility="gone">
+                      <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                          android:orientation="horizontal" android:gravity="center_vertical"
+                          android:paddingBottom="7dp">
+                          <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                              android:layout_weight="1" android:text="RECENTLY PLAYED"
+                              android:textColor="@color/recent_color" android:textSize="10sp"
+                              android:textStyle="bold" android:letterSpacing="0.2" android:fontFamily="monospace"/>
+                          <TextView android:id="@+id/clearRecentBtn"
+                              android:layout_width="wrap_content" android:layout_height="wrap_content"
+                              android:text="CLEAR" android:textColor="@color/text_dim"
+                              android:textSize="9sp" android:fontFamily="monospace" android:padding="4dp"/>
+                      </LinearLayout>
+                      <LinearLayout android:id="@+id/recentGamesList"
                           android:layout_width="wrap_content" android:layout_height="wrap_content"
-                          android:text="CLEAR" android:textColor="@color/text_dim"
-                          android:textSize="9sp" android:fontFamily="monospace" android:padding="4dp"/>
+                          android:orientation="vertical" android:gravity="end"/>
                   </LinearLayout>
-                  <LinearLayout android:id="@+id/recentGamesList"
-                      android:layout_width="match_parent" android:layout_height="wrap_content"
-                      android:orientation="horizontal" android:gravity="center_vertical"/>
+
+                  <TextView android:id="@+id/hintText"
+                      android:layout_width="wrap_content" android:layout_height="wrap_content"
+                      android:layout_marginTop="12dp"
+                      android:text="   تنقل      OK  دخول      R1+R2  خروج"
+                      android:textColor="@color/text_dim" android:textSize="10sp"
+                      android:fontFamily="sans-serif-light"/>
               </LinearLayout>
 
-              <TextView android:id="@+id/hintText"
-                  android:layout_width="wrap_content" android:layout_height="wrap_content"
-                  android:layout_alignParentBottom="true" android:layout_centerHorizontal="true"
-                  android:layout_marginBottom="12dp"
-                  android:text="   تنقل      OK  دخول      R1+R2  خروج"
-                  android:textColor="@color/text_dim" android:textSize="11sp"
-                  android:fontFamily="sans-serif-light"/>
-          </RelativeLayout>
+          </LinearLayout>
           EOF
 
           cat > app/src/main/res/layout/activity_games.xml << 'EOF'
@@ -313,18 +312,12 @@ jobs:
                   <View android:layout_width="match_parent" android:layout_height="1dp"
                       android:background="@color/accent"/>
 
-                  <RelativeLayout android:layout_width="match_parent" android:layout_height="0dp"
-                      android:layout_weight="1">
-                      <ListView android:id="@+id/gameList"
-                          android:layout_width="match_parent" android:layout_height="match_parent"
-                          android:divider="@color/divider" android:dividerHeight="1dp"
-                          android:scrollbars="none" android:focusable="false" android:overScrollMode="never"/>
-                      <TextView android:id="@+id/fixedArrow"
-                          android:layout_width="wrap_content" android:layout_height="wrap_content"
-                          android:layout_alignParentEnd="true" android:layout_centerVertical="true"
-                          android:text="&#9664;" android:textColor="@color/accent"
-                          android:textSize="14sp" android:paddingEnd="8dp"/>
-                  </RelativeLayout>
+                  <!-- السهم داخل الـ ListView نفسه كـ item مش fixed -->
+                  <ListView android:id="@+id/gameList"
+                      android:layout_width="match_parent" android:layout_height="0dp"
+                      android:layout_weight="1"
+                      android:divider="@color/divider" android:dividerHeight="1dp"
+                      android:scrollbars="none" android:focusable="false" android:overScrollMode="never"/>
               </LinearLayout>
 
               <FrameLayout android:layout_width="0dp" android:layout_height="match_parent"
@@ -346,13 +339,13 @@ jobs:
                       android:paddingTop="4dp" android:paddingBottom="4dp"
                       android:text="LAST PLAYED" android:textColor="#ffffff"
                       android:textSize="9sp" android:textStyle="bold" android:fontFamily="monospace"
-                      android:background="#ccff7a45" android:visibility="gone"/>
+                      android:background="#ccff9966" android:visibility="gone"/>
                   <TextView android:id="@+id/previewTitle"
                       android:layout_width="match_parent" android:layout_height="wrap_content"
                       android:layout_gravity="bottom" android:paddingStart="20dp" android:paddingEnd="20dp"
                       android:paddingTop="26dp" android:paddingBottom="16dp"
                       android:textColor="#ffffff" android:textSize="18sp" android:textStyle="bold"
-                      android:gravity="center" android:background="#dd000a1a"
+                      android:gravity="center" android:background="#dd001020"
                       android:fontFamily="sans-serif-condensed" android:letterSpacing="0.04"/>
               </FrameLayout>
           </LinearLayout>
@@ -385,18 +378,11 @@ jobs:
                   <View android:layout_width="match_parent" android:layout_height="1dp"
                       android:background="@color/recent_color"/>
 
-                  <RelativeLayout android:layout_width="match_parent" android:layout_height="0dp"
-                      android:layout_weight="1">
-                      <ListView android:id="@+id/recentList"
-                          android:layout_width="match_parent" android:layout_height="match_parent"
-                          android:divider="@color/divider" android:dividerHeight="1dp"
-                          android:scrollbars="none" android:focusable="false" android:overScrollMode="never"/>
-                      <TextView android:id="@+id/fixedArrow"
-                          android:layout_width="wrap_content" android:layout_height="wrap_content"
-                          android:layout_alignParentEnd="true" android:layout_centerVertical="true"
-                          android:text="&#9664;" android:textColor="@color/recent_color"
-                          android:textSize="14sp" android:paddingEnd="8dp"/>
-                  </RelativeLayout>
+                  <ListView android:id="@+id/recentList"
+                      android:layout_width="match_parent" android:layout_height="0dp"
+                      android:layout_weight="1"
+                      android:divider="@color/divider" android:dividerHeight="1dp"
+                      android:scrollbars="none" android:focusable="false" android:overScrollMode="never"/>
               </LinearLayout>
 
               <FrameLayout android:layout_width="0dp" android:layout_height="match_parent"
@@ -418,18 +404,19 @@ jobs:
                       android:paddingTop="4dp" android:paddingBottom="4dp"
                       android:textColor="#ffffff" android:textSize="9sp"
                       android:textStyle="bold" android:fontFamily="monospace"
-                      android:background="#cc1a8fff"/>
+                      android:background="#cc4db8ff"/>
                   <TextView android:id="@+id/recentPreviewTitle"
                       android:layout_width="match_parent" android:layout_height="wrap_content"
                       android:layout_gravity="bottom" android:paddingStart="20dp" android:paddingEnd="20dp"
                       android:paddingTop="26dp" android:paddingBottom="16dp"
                       android:textColor="#ffffff" android:textSize="18sp" android:textStyle="bold"
-                      android:gravity="center" android:background="#dd000a1a"
+                      android:gravity="center" android:background="#dd001020"
                       android:fontFamily="sans-serif-condensed"/>
               </FrameLayout>
           </LinearLayout>
           EOF
 
+          # ── item_game: السهم جزء من الـ item نفسه ──
           cat > app/src/main/res/layout/item_game.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -447,6 +434,13 @@ jobs:
                   android:layout_centerVertical="true" android:layout_toEndOf="@id/gameNum"
                   android:layout_marginEnd="28dp" android:textSize="14sp"
                   android:ellipsize="end" android:singleLine="true" android:fontFamily="sans-serif"/>
+              <!-- السهم جزء من الـ item: يظهر فقط لما يكون selected -->
+              <TextView android:id="@+id/arrowIndicator"
+                  android:layout_width="wrap_content" android:layout_height="wrap_content"
+                  android:layout_alignParentEnd="true" android:layout_centerVertical="true"
+                  android:text="&#9664;" android:textColor="@color/accent"
+                  android:textSize="14sp" android:paddingEnd="8dp"
+                  android:visibility="gone"/>
           </RelativeLayout>
           EOF
 
@@ -473,6 +467,13 @@ jobs:
                       android:layout_width="match_parent" android:layout_height="wrap_content"
                       android:textSize="10sp" android:fontFamily="monospace" android:layout_marginTop="2dp"/>
               </LinearLayout>
+              <!-- السهم جزء من الـ item: يظهر فقط لما يكون selected -->
+              <TextView android:id="@+id/arrowIndicator"
+                  android:layout_width="wrap_content" android:layout_height="wrap_content"
+                  android:layout_alignParentEnd="true" android:layout_centerVertical="true"
+                  android:text="&#9664;" android:textColor="@color/recent_color"
+                  android:textSize="14sp" android:paddingEnd="8dp"
+                  android:visibility="gone"/>
           </RelativeLayout>
           EOF
 
@@ -482,9 +483,9 @@ jobs:
           package com.khaloahmed.launcher;
           public class Config {
               public static final String[][] PLATFORMS = {
-                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",         ".bin,.iso,.img,.pbp,.cue", "🎮"},
-                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",        ".iso,.cso,.pbp",           "🕹️"},
-                  {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbc", ".gbc,.gb,.zip",            "👾"},
+                  {"PS1", "/storage/0CF6-106E/ps1", "com.epsxe.ePSXe",      ".bin,.iso,.img,.pbp,.cue", "🎮"},
+                  {"PSP", "/storage/0CF6-106E/psp", "org.ppsspp.ppsspp",     ".iso,.cso,.pbp",           "🕹️"},
+                  {"GBC", "/storage/0CF6-106E/gbc", "com.fastemulator.gbc",  ".gbc,.gb,.zip",            "👾"},
               };
               public static final String[] IMAGE_EXTS = {".png",".jpg",".jpeg",".webp"};
               public static final String   PREFS_NAME = "khalo_prefs";
@@ -595,17 +596,17 @@ jobs:
                   LinearLayout root=new LinearLayout(activity);
                   root.setOrientation(LinearLayout.VERTICAL); root.setGravity(Gravity.CENTER); root.setPadding(52,44,52,36);
                   GradientDrawable bg=new GradientDrawable();
-                  bg.setColors(new int[]{0xff04101e,0xff071628});
+                  bg.setColors(new int[]{0xff0f1f3d,0xff162440});
                   bg.setGradientType(GradientDrawable.LINEAR_GRADIENT);
                   bg.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
-                  bg.setCornerRadius(30f); bg.setStroke(2,0xff1a8fff); root.setBackground(bg);
+                  bg.setCornerRadius(30f); bg.setStroke(2,0xff4db8ff); root.setBackground(bg);
 
                   TextView title=new TextView(activity); title.setText("خروج من التطبيق؟");
                   title.setTextColor(0xffffffff); title.setTextSize(17f); title.setTypeface(Typeface.DEFAULT_BOLD);
                   title.setGravity(Gravity.CENTER); title.setPadding(0,0,0,6); root.addView(title);
 
                   TextView sub=new TextView(activity); sub.setText("سيتم إغلاق التطبيق بالكامل");
-                  sub.setTextColor(0xff4a6a90); sub.setTextSize(11f); sub.setGravity(Gravity.CENTER); sub.setPadding(0,0,0,30); root.addView(sub);
+                  sub.setTextColor(0xff6a8ab0); sub.setTextSize(11f); sub.setGravity(Gravity.CENTER); sub.setPadding(0,0,0,30); root.addView(sub);
 
                   LinearLayout btnRow=new LinearLayout(activity); btnRow.setOrientation(LinearLayout.HORIZONTAL); btnRow.setGravity(Gravity.CENTER);
                   btnContinue=makeBtn("متابعة"); btnExit=makeBtn("خروج");
@@ -640,8 +641,8 @@ jobs:
               private void highlightSelected(){
                   GradientDrawable gdC=new GradientDrawable(); gdC.setCornerRadius(20f);
                   GradientDrawable gdE=new GradientDrawable(); gdE.setCornerRadius(20f);
-                  if(selected==0){gdC.setColor(0xff0d2a4a);gdC.setStroke(2,0xff1a8fff);btnContinue.setTextColor(0xffffffff);gdE.setColor(0xff06111f);gdE.setStroke(1,0xff0d2040);btnExit.setTextColor(0xff4a6a90);}
-                  else{gdC.setColor(0xff06111f);gdC.setStroke(1,0xff0d2040);btnContinue.setTextColor(0xff4a6a90);gdE.setColor(0xff3a0a00);gdE.setStroke(2,0xffff4444);btnExit.setTextColor(0xffff6666);}
+                  if(selected==0){gdC.setColor(0xff1a3a60);gdC.setStroke(2,0xff4db8ff);btnContinue.setTextColor(0xffffffff);gdE.setColor(0xff0d1f38);gdE.setStroke(1,0xff1a3060);btnExit.setTextColor(0xff6a8ab0);}
+                  else{gdC.setColor(0xff0d1f38);gdC.setStroke(1,0xff1a3060);btnContinue.setTextColor(0xff6a8ab0);gdE.setColor(0xff3a0a00);gdE.setStroke(2,0xffff4444);btnExit.setTextColor(0xffff6666);}
                   btnContinue.setBackground(gdC); btnExit.setBackground(gdE);
               }
               private void confirm(){dialog.dismiss(); if(selected==1) callback.onExit();}
@@ -652,8 +653,7 @@ jobs:
           cat > app/src/main/java/com/khaloahmed/launcher/PlatformActivity.java << 'EOF'
           package com.khaloahmed.launcher;
           import android.app.Activity; import android.content.Intent;
-          import android.graphics.Color; import android.graphics.Typeface;
-          import android.graphics.drawable.GradientDrawable;
+          import android.graphics.Typeface; import android.graphics.drawable.GradientDrawable;
           import android.os.Bundle; import android.view.Gravity;
           import android.view.InputDevice; import android.view.KeyEvent;
           import android.view.MotionEvent; import android.view.View;
@@ -688,39 +688,61 @@ jobs:
               }
 
               private LinearLayout buildPlatformCard(String[] p,boolean sel,int idx,boolean animate){
-                  int sz=sel?225:188;
+                  // المربعات تمتد بطول الشاشة: weight=1 لكل كارت
                   LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER);
-                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(sz,sz); lp.setMargins(20,0,20,0); card.setLayoutParams(lp); card.setPadding(10,10,10,10);
-                  GradientDrawable gd=new GradientDrawable(); gd.setCornerRadius(24f);
-                  if(sel){gd.setColors(new int[]{0xff0d2a50,0xff061428});gd.setGradientType(GradientDrawable.LINEAR_GRADIENT);gd.setOrientation(GradientDrawable.Orientation.TL_BR);gd.setStroke(3,0xff1a8fff);card.setBackground(gd);card.setElevation(32f);card.setAlpha(1f);}
-                  else{gd.setColor(0x330d1a30);gd.setStroke(1,0x440d2040);card.setBackground(gd);card.setElevation(2f);card.setAlpha(0.5f);}
-                  TextView icon=new TextView(this); icon.setText(p[4]); icon.setTextSize(sel?42:32); icon.setGravity(Gravity.CENTER); card.addView(icon);
-                  TextView name=new TextView(this); name.setText(p[0]); name.setTextSize(sel?15:11);
-                  name.setTextColor(sel?0xff40d0ff:0xff2a5070);
-                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,5,0,0); card.addView(name);
-                  TextView count=new TextView(this); count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(9);
-                  count.setTextColor(sel?0xff1a8fff:0xff0d2040);
-                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
+                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,1f);
+                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,20,10,20);
+                  GradientDrawable gd=new GradientDrawable(); gd.setCornerRadius(0f);
+                  if(sel){
+                      gd.setColors(new int[]{0xff1a3a60,0xff0f2040});
+                      gd.setGradientType(GradientDrawable.LINEAR_GRADIENT);
+                      gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
+                      gd.setStroke(0,0); card.setBackground(gd); card.setElevation(32f); card.setAlpha(1f);
+                      // خط علوي مضيء للكارت المختار
+                      View topLine=new View(this);
+                      LinearLayout.LayoutParams lineLp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);
+                      topLine.setLayoutParams(lineLp); topLine.setBackgroundColor(0xff4db8ff);
+                      card.addView(topLine,0);
+                  } else {
+                      gd.setColor(0x220d1f38); gd.setStroke(0,0); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.55f);
+                  }
+                  TextView icon=new TextView(this); icon.setText(p[4]); icon.setTextSize(sel?48:36); icon.setGravity(Gravity.CENTER); card.addView(icon);
+                  TextView name=new TextView(this); name.setText(p[0]); name.setTextSize(sel?16:12);
+                  name.setTextColor(sel?0xff7dd8ff:0xff2a5070);
+                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,8,0,0); card.addView(name);
+                  TextView count=new TextView(this); count.setText(gameCounts[idx]+" GAMES"); count.setTextSize(10);
+                  count.setTextColor(sel?0xff4db8ff:0xff0d2040);
+                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,4,0,0); card.addView(count);
                   final int i=idx; card.setOnClickListener(v->openPlatform(i));
                   if(sel&&animate) card.startAnimation(AnimationUtils.loadAnimation(this,R.anim.pop_in));
                   return card;
               }
 
               private LinearLayout buildRecentCard(boolean sel,boolean animate){
-                  int sz=sel?225:188;
                   LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER);
-                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(sz,sz); lp.setMargins(20,0,20,0); card.setLayoutParams(lp); card.setPadding(10,10,10,10);
-                  GradientDrawable gd=new GradientDrawable(); gd.setCornerRadius(24f);
-                  if(sel){gd.setColor(0xff1f0f05);gd.setStroke(3,0xffff7a45);card.setBackground(gd);card.setElevation(32f);card.setAlpha(1f);}
-                  else{gd.setColor(0x33130a05);gd.setStroke(1,0x442a1408);card.setBackground(gd);card.setElevation(2f);card.setAlpha(0.5f);}
-                  TextView icon=new TextView(this); icon.setText("🕐"); icon.setTextSize(sel?42:32); icon.setGravity(Gravity.CENTER); card.addView(icon);
-                  TextView name=new TextView(this); name.setText("RECENT"); name.setTextSize(sel?15:11);
-                  name.setTextColor(sel?0xffff7a45:0xff3a2010);
-                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,5,0,0); card.addView(name);
+                  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,1f);
+                  lp.setMargins(4,0,4,0); card.setLayoutParams(lp); card.setPadding(10,20,10,20);
+                  GradientDrawable gd=new GradientDrawable(); gd.setCornerRadius(0f);
+                  if(sel){
+                      gd.setColors(new int[]{0xff3a1a0a,0xff220f05});
+                      gd.setGradientType(GradientDrawable.LINEAR_GRADIENT);
+                      gd.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
+                      gd.setStroke(0,0); card.setBackground(gd); card.setElevation(32f); card.setAlpha(1f);
+                      View topLine=new View(this);
+                      LinearLayout.LayoutParams lineLp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,4);
+                      topLine.setLayoutParams(lineLp); topLine.setBackgroundColor(0xffff9966);
+                      card.addView(topLine,0);
+                  } else {
+                      gd.setColor(0x22130a05); gd.setStroke(0,0); card.setBackground(gd); card.setElevation(2f); card.setAlpha(0.55f);
+                  }
+                  TextView icon=new TextView(this); icon.setText("🕐"); icon.setTextSize(sel?48:36); icon.setGravity(Gravity.CENTER); card.addView(icon);
+                  TextView name=new TextView(this); name.setText("RECENT"); name.setTextSize(sel?16:12);
+                  name.setTextColor(sel?0xffff9966:0xff3a2010);
+                  name.setGravity(Gravity.CENTER); name.setTypeface(Typeface.MONOSPACE,Typeface.BOLD); name.setLetterSpacing(0.2f); name.setPadding(0,8,0,0); card.addView(name);
                   List<RecentEntry> r=RecentStore.load(this);
-                  TextView count=new TextView(this); count.setText(r.size()+" GAMES"); count.setTextSize(9);
-                  count.setTextColor(sel?0xffff7a45:0xff2a1008);
-                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,3,0,0); card.addView(count);
+                  TextView count=new TextView(this); count.setText(r.size()+" GAMES"); count.setTextSize(10);
+                  count.setTextColor(sel?0xffff9966:0xff2a1008);
+                  count.setGravity(Gravity.CENTER); count.setTypeface(Typeface.MONOSPACE); count.setPadding(0,4,0,0); card.addView(count);
                   card.setOnClickListener(v->openRecent());
                   if(sel&&animate) card.startAnimation(AnimationUtils.loadAnimation(this,R.anim.pop_in));
                   return card;
@@ -734,11 +756,11 @@ jobs:
                   int max=Math.min(recent.size(),5);
                   for(int i=0;i<max;i++){
                       RecentEntry e=recent.get(i); TextView chip=new TextView(this);
-                      chip.setText(getPlatformIcon(e.platform)+"  "+e.name); chip.setTextColor(0xffc0d8ff); chip.setTextSize(11f);
+                      chip.setText(getPlatformIcon(e.platform)+"  "+e.name); chip.setTextColor(0xffb8d4f0); chip.setTextSize(11f);
                       chip.setMaxLines(1); chip.setEllipsize(android.text.TextUtils.TruncateAt.END); chip.setSingleLine(true);
-                      GradientDrawable bg=new GradientDrawable(); bg.setCornerRadius(16f); bg.setColor(0xff0a1828); bg.setStroke(1,0xff0d2545);
+                      GradientDrawable bg=new GradientDrawable(); bg.setCornerRadius(16f); bg.setColor(0xff0f1f3d); bg.setStroke(1,0xff1a3060);
                       chip.setBackground(bg); chip.setPadding(16,7,16,7); chip.setMaxWidth(260);
-                      LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT); lp.setMargins(0,0,10,0); chip.setLayoutParams(lp);
+                      LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT); clp.setMargins(0,0,0,6); chip.setLayoutParams(clp);
                       final RecentEntry entry=e; chip.setOnClickListener(v->launchFromRecent(entry)); chipRow.addView(chip);
                   }
                   clearBtn.setOnClickListener(v->{RecentStore.clear(this);updateRecentStrip();drawPlatforms(false);});
@@ -866,32 +888,42 @@ jobs:
                   if(!isInstalled(cfg[2])){toast("المحاكي غير مثبت: "+cfg[2]);return;}
                   RecentStore.record(this,g); lastPlayedFile=g.file; lastPlayedBadge.setVisibility(View.VISIBLE);
                   switch(cfg[2]){
-                      case "com.epsxe.ePSXe":          launchEpsxe(rom,path);    break;
-                      case "com.fastemulator.gbc":  launchMyOldBoy(rom,path); break;
-                      default:                          launchPpsspp(rom,path);   break;
+                      case "com.epsxe.ePSXe":         launchEpsxe(path);    break;
+                      case "com.fastemulator.gbc":     launchMyOldBoy(rom);  break;
+                      default:                         launchPpsspp(path);   break;
                   }
               }
 
-              // ePSXe: ACTION_VIEW first, then explicit component
-              private void launchEpsxe(File rom,String path){
-                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setDataAndType(Uri.fromFile(rom),"application/octet-stream");i.setPackage("com.epsxe.ePSXe");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);return;}catch(Exception ignored){}
-                  for(String act:new String[]{"com.epsxe.ePSXe.ePSXe","com.epsxe.ePSXe.MainActivity"}){
-                      try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("com.epsxe.ePSXe",act));i.putExtra("com.epsxe.ePSXe.ROM",path);i.putExtra("ROM",path);i.setData(Uri.fromFile(rom));i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);return;}catch(Exception ignored){}
-                  }
-                  toast("تعذر تشغيل PS1 تلقائياً");
+              // ── PS1: ACTION_MAIN + component + isoName كـ String (بالضبط زي Arc) ──
+              private void launchEpsxe(String path){
+                  try{
+                      Intent i=new Intent(Intent.ACTION_MAIN);
+                      i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));
+                      i.putExtra("com.epsxe.ePSXe.isoName", path);
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  }catch(Exception e){toast("خطأ في تشغيل PS1: "+e.getMessage());}
               }
 
-              // My OldBoy: ACTION_VIEW with file URI (My OldBoy handles this natively)
-              private void launchMyOldBoy(File rom,String path){
-                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");i.setPackage("com.fastemulator.gbc");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);return;}catch(Exception ignored){}
-                  for(String act:new String[]{"com.fastemulator.gbc.RomListActivity","com.fastemulator.gbc.EmulatorActivity","com.fastemulator.gbc.EmulatorActivity"}){
-                      try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("com.fastemulator.gbc",act));i.putExtra("PATH",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);return;}catch(Exception ignored){}
-                  }
-                  try{Intent fb=getPackageManager().getLaunchIntentForPackage("com.fastemulator.gbc");if(fb!=null){startActivity(fb);toast("افتح اللعبة يدوياً من My OldBoy");}}catch(Exception e){toast("خطأ في تشغيل GBC");}
+              // ── GBC: ACTION_VIEW + component مباشرة لـ EmulatorActivity (بالضبط زي Arc) ──
+              private void launchMyOldBoy(File rom){
+                  try{
+                      Intent i=new Intent(Intent.ACTION_VIEW);
+                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
+                      i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      startActivity(i);
+                  }catch(Exception e){toast("خطأ في تشغيل GBC: "+e.getMessage());}
               }
 
-              private void launchPpsspp(File rom,String path){
-                  try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}catch(Exception e){toast("خطأ في تشغيل PSP");}
+              private void launchPpsspp(String path){
+                  try{
+                      Intent i=new Intent(Intent.ACTION_MAIN);
+                      i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
+                      i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  }catch(Exception e){toast("خطأ في تشغيل PSP: "+e.getMessage());}
               }
 
               private void toast(String m){Toast.makeText(this,m,Toast.LENGTH_SHORT).show();}
@@ -934,16 +966,18 @@ jobs:
                   @Override public long getItemId(int p){return p;}
                   @Override public View getView(int pos,View cv,ViewGroup parent){
                       ViewHolder vh;
-                      if(cv==null){cv=getLayoutInflater().inflate(R.layout.item_game,parent,false);vh=new ViewHolder();vh.num=cv.findViewById(R.id.gameNum);vh.name=cv.findViewById(R.id.gameName);vh.accent=cv.findViewById(R.id.accentBar);cv.setTag(vh);}
+                      if(cv==null){cv=getLayoutInflater().inflate(R.layout.item_game,parent,false);vh=new ViewHolder();vh.num=cv.findViewById(R.id.gameNum);vh.name=cv.findViewById(R.id.gameName);vh.accent=cv.findViewById(R.id.accentBar);vh.arrow=cv.findViewById(R.id.arrowIndicator);cv.setTag(vh);}
                       else vh=(ViewHolder)cv.getTag();
                       GameItem g=games.get(pos); boolean sel=(pos==selectedGame),last=g.file.equals(lastPlayedFile);
                       vh.num.setText(String.format("%02d",pos+1)); vh.name.setText(g.name);
-                      if(sel){cv.setBackgroundColor(0xff0d2a50);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(14.5f);vh.num.setTextColor(0xff40d0ff);vh.accent.setVisibility(View.VISIBLE);vh.accent.setBackgroundColor(0xff1a8fff);}
-                      else if(last){cv.setBackgroundColor(0xff120a04);vh.name.setTextColor(0xffffaa66);vh.name.setTextSize(13.5f);vh.num.setTextColor(0xffff7a45);vh.accent.setVisibility(View.VISIBLE);vh.accent.setBackgroundColor(0xffff7a45);}
+                      // السهم يظهر فقط في الـ selected item
+                      vh.arrow.setVisibility(sel?View.VISIBLE:View.GONE);
+                      if(sel){cv.setBackgroundColor(0xff1a3a60);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(14.5f);vh.num.setTextColor(0xff7dd8ff);vh.accent.setVisibility(View.VISIBLE);vh.accent.setBackgroundColor(0xff4db8ff);}
+                      else if(last){cv.setBackgroundColor(0xff1a0f05);vh.name.setTextColor(0xffffbb88);vh.name.setTextSize(13.5f);vh.num.setTextColor(0xffff9966);vh.accent.setVisibility(View.VISIBLE);vh.accent.setBackgroundColor(0xffff9966);}
                       else{cv.setBackgroundColor(0x00000000);vh.name.setTextColor(0xff90b8e0);vh.name.setTextSize(13.5f);vh.num.setTextColor(0xff3a6090);vh.accent.setVisibility(View.INVISIBLE);}
                       return cv;
                   }
-                  class ViewHolder{TextView num,name; View accent;}
+                  class ViewHolder{TextView num,name,arrow; View accent;}
               }
           }
           EOF
@@ -1018,24 +1052,42 @@ jobs:
                   if(!isInstalled(cfg[2])){Toast.makeText(this,"المحاكي غير مثبت",Toast.LENGTH_SHORT).show();return;}
                   RecentStore.record(this,g); File rom=new File(cfg[1]+"/"+e.file);
                   switch(cfg[2]){
-                      case "com.epsxe.ePSXe":         launchEpsxe(rom,rom.getAbsolutePath());    break;
-                      case "com.fastemulator.gbc": launchMyOldBoy(rom,rom.getAbsolutePath()); break;
-                      default:                         launchPpsspp(rom,rom.getAbsolutePath());   break;
+                      case "com.epsxe.ePSXe":         launchEpsxe(rom.getAbsolutePath()); break;
+                      case "com.fastemulator.gbc":     launchMyOldBoy(rom);                break;
+                      default:                         launchPpsspp(rom.getAbsolutePath()); break;
                   }
               }
 
-              private void launchEpsxe(File rom,String path){
-                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setDataAndType(Uri.fromFile(rom),"application/octet-stream");i.setPackage("com.epsxe.ePSXe");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);return;}catch(Exception ignored){}
-                  for(String act:new String[]{"com.epsxe.ePSXe.ePSXe","com.epsxe.ePSXe.MainActivity"}){try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("com.epsxe.ePSXe",act));i.putExtra("com.epsxe.ePSXe.ROM",path);i.putExtra("ROM",path);i.setData(Uri.fromFile(rom));i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);return;}catch(Exception ignored){}}
-                  Toast.makeText(this,"تعذر تشغيل PS1",Toast.LENGTH_SHORT).show();
+              // ── PS1: نفس الـ intent بالضبط زي GamesActivity ──
+              private void launchEpsxe(String path){
+                  try{
+                      Intent i=new Intent(Intent.ACTION_MAIN);
+                      i.setComponent(new ComponentName("com.epsxe.ePSXe","com.epsxe.ePSXe.ePSXe"));
+                      i.putExtra("com.epsxe.ePSXe.isoName", path);
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  }catch(Exception e){Toast.makeText(this,"خطأ PS1: "+e.getMessage(),Toast.LENGTH_SHORT).show();}
               }
-              private void launchMyOldBoy(File rom,String path){
-                  try{Intent i=new Intent(Intent.ACTION_VIEW);i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");i.setPackage("com.fastemulator.gbc");i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(i);return;}catch(Exception ignored){}
-                  for(String act:new String[]{"com.fastemulator.gbc.RomListActivity","com.fastemulator.gbc.EmulatorActivity"}){try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("com.fastemulator.gbc",act));i.putExtra("PATH",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);return;}catch(Exception ignored){}}
-                  try{Intent fb=getPackageManager().getLaunchIntentForPackage("com.fastemulator.gbc");if(fb!=null){startActivity(fb);Toast.makeText(this,"افتح يدوياً من My OldBoy",Toast.LENGTH_SHORT).show();}}catch(Exception e){Toast.makeText(this,"خطأ GBC",Toast.LENGTH_SHORT).show();}
+
+              // ── GBC: نفس الـ intent بالضبط زي GamesActivity ──
+              private void launchMyOldBoy(File rom){
+                  try{
+                      Intent i=new Intent(Intent.ACTION_VIEW);
+                      i.setComponent(new ComponentName("com.fastemulator.gbc","com.fastemulator.gbc.EmulatorActivity"));
+                      i.setDataAndType(Uri.fromFile(rom),"application/x-gbc-rom");
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                      startActivity(i);
+                  }catch(Exception e){Toast.makeText(this,"خطأ GBC: "+e.getMessage(),Toast.LENGTH_SHORT).show();}
               }
-              private void launchPpsspp(File rom,String path){
-                  try{Intent i=new Intent(Intent.ACTION_MAIN);i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);startActivity(i);}catch(Exception e){Toast.makeText(this,"خطأ PSP",Toast.LENGTH_SHORT).show();}
+
+              private void launchPpsspp(String path){
+                  try{
+                      Intent i=new Intent(Intent.ACTION_MAIN);
+                      i.setComponent(new ComponentName("org.ppsspp.ppsspp","org.ppsspp.ppsspp.PpssppActivity"));
+                      i.putExtra("org.ppsspp.ppsspp.Shortcuts",path);
+                      i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                      startActivity(i);
+                  }catch(Exception e){Toast.makeText(this,"خطأ PSP: "+e.getMessage(),Toast.LENGTH_SHORT).show();}
               }
 
               @Override public boolean onKeyDown(int keyCode,KeyEvent event){
@@ -1075,16 +1127,18 @@ jobs:
                   @Override public long getItemId(int p){return p;}
                   @Override public View getView(int pos,View cv,ViewGroup parent){
                       ViewHolder vh;
-                      if(cv==null){cv=getLayoutInflater().inflate(R.layout.item_recent,parent,false);vh=new ViewHolder();vh.icon=cv.findViewById(R.id.itemIcon);vh.name=cv.findViewById(R.id.itemName);vh.platform=cv.findViewById(R.id.itemPlatform);vh.accent=cv.findViewById(R.id.accentBar);cv.setTag(vh);}
+                      if(cv==null){cv=getLayoutInflater().inflate(R.layout.item_recent,parent,false);vh=new ViewHolder();vh.icon=cv.findViewById(R.id.itemIcon);vh.name=cv.findViewById(R.id.itemName);vh.platform=cv.findViewById(R.id.itemPlatform);vh.accent=cv.findViewById(R.id.accentBar);vh.arrow=cv.findViewById(R.id.arrowIndicator);cv.setTag(vh);}
                       else vh=(ViewHolder)cv.getTag();
                       RecentEntry e=entries.get(pos); boolean sel=(pos==selectedIdx);
                       vh.icon.setText(getPlatformIcon(e.platform)); vh.name.setText(e.name);
                       vh.platform.setText(e.platform+(pos==0?"  ★ LAST":""));
-                      if(sel){cv.setBackgroundColor(0xff0d2a50);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(14.5f);vh.platform.setTextColor(0xff40d0ff);vh.accent.setVisibility(View.VISIBLE);}
+                      // السهم يظهر فقط في الـ selected item
+                      vh.arrow.setVisibility(sel?View.VISIBLE:View.GONE);
+                      if(sel){cv.setBackgroundColor(0xff1a3a60);vh.name.setTextColor(0xffffffff);vh.name.setTextSize(14.5f);vh.platform.setTextColor(0xff7dd8ff);vh.accent.setVisibility(View.VISIBLE);}
                       else{cv.setBackgroundColor(0x00000000);vh.name.setTextColor(0xff90b8e0);vh.name.setTextSize(13.5f);vh.platform.setTextColor(0xff3a6090);vh.accent.setVisibility(View.INVISIBLE);}
                       return cv;
                   }
-                  class ViewHolder{TextView icon,name,platform; View accent;}
+                  class ViewHolder{TextView icon,name,platform,arrow; View accent;}
               }
           }
           EOF
