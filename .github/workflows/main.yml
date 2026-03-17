@@ -41,6 +41,11 @@ jobs:
           include ':app'
           EOF
 
+          cat > gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
           # root build.gradle
           cat > build.gradle << 'EOF'
           plugins {
@@ -135,6 +140,12 @@ jobs:
                   <item name="android:activityCloseExitAnimation">@anim/slide_out_right</item>
               </style>
           </resources>
+          EOF
+
+          # gradle.properties
+          cat > gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
           EOF
 
           # strings.xml
